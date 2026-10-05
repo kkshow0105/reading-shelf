@@ -125,3 +125,17 @@ npm run build（含 TypeScript 检查）通过；Node 内置 4 项测试全部�
 npm run build（含 TypeScript 检查）通过，现有 5 项 Node 测试全部通过。最初沙箱中 Node 读取安装目录出现 EPERM，使用获准的沙箱外现有命令复验通过；没有安装依赖或浏览器。没有完成真机、屏幕阅读器或真实文字放大测试，仍保留前述验证限制。
 
 本轮实际截图：qa/polish-shelf-mobile-390x844.jpg、qa/polish-detail-mobile-390x844.jpg、qa/polish-add-mobile-390x844.jpg、qa/polish-detail-desktop-1366x768.jpg、qa/polish-add-desktop-1366x768.jpg。截图为真实页面浅色首屏，不纳入 Git。PRODUCT.md 本轮未修改；未进入 Supabase、数据库、PWA 或其他数据层开发。
+
+## 4A 数据基础验证（2026-10-05）
+
+从 eff9eac 干净基线开始。只新增官方 Supabase JS SDK 2.117.2 及必要传递依赖；未安装 CLI、Docker、数据库、ORM、UI 库、Skill 或 MCP。没有 env、project link 或现有登录凭据迹象；未确认或操作任何远端项目，bucket 初始化脚本也未执行。
+
+production build（含 TypeScript）通过。现有5项测试保留，新增12项数据层测试，共17项通过：状态映射、可空整数评分、日期、归一化位置、UUID路径与归属、返回数据边界、原始 revision 精度、软删除默认过滤与分页、条件更新冲突、PATCH删除 / 恢复、原图字节 / upsert=false、失败及冲突保留原图、缺失配置与高权限 key 拒绝、migration静态安全检查。
+
+SDK测试使用真实包，但 fetch 全部本地拦截，不访问任何 Supabase 服务。初次验证发现 Node 类型剥离不支持参数属性，以及 mock 的零行响应不符合当前 SDK 的数组返回契约；已在本轮新代码 / fixture 内修正并复验通过，没有修改第三阶段源码。
+
+SQL仅作静态审查：四表RLS、列级授权、复合外键、DB时间 / 删除trigger、路径限制、无客户端 membership 写入 / books hard DELETE / Storage UPDATE或DELETE。没有 PostgreSQL / Docker，尚未真实解析或执行migration、FK、trigger、RLS、Storage权限、Auth或并发。已准备17项本地pgTAP回滚测试，但未执行；未将其计为通过。
+
+UI冻结检查：App、全部页面 / 组件、styles.css、现有Book/Profile类型、mock、DESIGN.md与第三阶段对比无diff；原页面未导入新client / repository，仍使用mock。没有重做视觉或本轮整套截图，也没有实现4B数据接入。真实Database类型尚未生成；官方生成流程与迁移 / bucket / 管理员初始化步骤记录在 SUPABASE-4A.md。
+
+PRODUCT.md 与 README明确完整备份为包含manifest、结构化数据和covers原图的ZIP；JSON仅为结构化数据备份。没有实现导出、PWA、持久化、永久删除或定时清理。
