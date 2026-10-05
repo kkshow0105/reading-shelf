@@ -1,10 +1,11 @@
 import type { Book, Filters, SortOrder, BookDraft } from '../types/index.ts'
+import { defaultCropPosition, normalizeCropPosition } from './covers.ts'
 
 export const emptyFilters = (): Filters => ({ statuses: [], ratings: [], years: [] })
-export const blankDraft = (): BookDraft => ({ title: '', author: '', translator: '', status: '想读', startedOn: '', finishedOn: '', rating: null, note: '', cover: '' })
+export const blankDraft = (): BookDraft => ({ title: '', author: '', translator: '', status: '想读', startedOn: '', finishedOn: '', rating: null, note: '', cover: '', cropPosition: defaultCropPosition() })
 export function toDraft(book: Book): BookDraft {
   const { title, author, translator, status, startedOn, finishedOn, rating, note, cover } = book
-  return { title, author, translator, status, startedOn, finishedOn, rating, note, cover }
+  return { title, author, translator, status, startedOn, finishedOn, rating, note, cover, cropPosition: normalizeCropPosition(book.cropPosition) }
 }
 export function readingDate(book: Pick<Book, 'status' | 'finishedOn' | 'startedOn'>): string {
   return (book.status === '读完' || book.status === '弃读') ? book.finishedOn || book.startedOn : book.startedOn

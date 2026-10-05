@@ -3,6 +3,8 @@ export type ReadingStatus = (typeof statuses)[number]
 export type Theme = 'system' | 'light' | 'dark'
 export type SortOrder = 'recent' | 'earliest' | 'rating' | 'added' | 'title'
 export interface Profile { id: string; name: string; description: string }
+// Non-destructive display alignment: 0 = left/top, 0.5 = center, 1 = right/bottom.
+export interface CropPosition { x: number; y: number }
 export interface Book {
   id: string
   profileId: string
@@ -14,7 +16,8 @@ export interface Book {
   finishedOn: string
   rating: number | null
   note: string
-  cover: string
+  cover: string // Original image source; never replaced with a cropped rendition.
+  cropPosition?: CropPosition // Missing on older records means centered display.
   createdAt: string
 }
 export interface Filters { statuses: ReadingStatus[]; ratings: string[]; years: string[] }

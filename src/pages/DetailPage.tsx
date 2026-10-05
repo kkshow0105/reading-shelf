@@ -11,7 +11,7 @@ export function DetailPage({ profile, book, onNavigate, onDelete }: { profile: P
   const [deleting, setDeleting] = useState(false)
   return <main id="main-content" className="detail-page page-shell page-enter" tabIndex={-1}>
     <div className="page-nav"><Button onClick={() => onNavigate(`/p/${profile.id}/shelf`)}><ArrowLeft size={18} aria-hidden="true" />返回书架</Button><Button onClick={() => onNavigate(`/p/${profile.id}/books/${book.id}/edit`)}>编辑</Button></div>
-    <article className="book-detail"><BookCover title={book.title} author={book.author} cover={book.cover} className="detail-cover" />
+    <article className="book-detail"><BookCover title={book.title} author={book.author} cover={book.cover} className="detail-cover" presentation="detail" />
       <div className="detail-copy"><p className="editorial-label">阅读札记 / READING NOTES</p><h1>{book.title}</h1><dl className="book-metadata"><div><dt>作者</dt><dd>{book.author}</dd></div>{book.translator && <div><dt>译者</dt><dd>{book.translator}</dd></div>}</dl>
         <div className="reading-metadata"><span className="reading-status">{book.status}</span>{book.startedOn || book.finishedOn ? <span>{book.startedOn && <time dateTime={book.startedOn}>{formatDate(book.startedOn)}</time>}{book.startedOn && book.finishedOn && ' — '}{book.finishedOn && <time dateTime={book.finishedOn}>{formatDate(book.finishedOn)}</time>}</span> : <span>阅读日期未记录</span>}</div>
         <div className="detail-rating">{book.rating === null ? <span>尚未评分</span> : <><Stars value={book.rating} size={17} /><span>{book.rating} / 5</span></>}</div>

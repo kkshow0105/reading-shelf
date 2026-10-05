@@ -126,6 +126,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .book-entry, .skeleton-book { width: min(100%, var(--cover-max)); justify-self: center; display: block; min-width: 0; }
 .book-cover { width: 100%; aspect-ratio: var(--cover-ratio); border-radius: var(--radius-cover); background: var(--paper); box-shadow: var(--shadow-cover); transition: transform var(--motion-normal) var(--ease), box-shadow var(--motion-normal) var(--ease); }
 .book-cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.book-cover[data-presentation="shelf"] img { object-fit: cover; object-position: center; }
+.book-cover-original { aspect-ratio: auto; }
+.book-cover-original img { height: auto; max-height: 360px; object-fit: contain; }
 .book-entry:active .book-cover { transform: translateY(1px); }
 .cover-fallback { width: 100%; height: 100%; padding: 20px; background: var(--surface-muted); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 24px; overflow-wrap: anywhere; }
 .cover-fallback-rule { width: 24px; height: 1px; background: var(--control-border); }
@@ -268,6 +271,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .detail-page { max-width: 900px; }
   .book-detail { grid-template-columns: 200px minmax(0, 1fr); gap: 40px; }
   .detail-cover { width: 200px; }
+  .detail-cover.book-cover-original img { max-height: 300px; }
 }
 @media (min-width: 641px) and (max-width: 767px) {
   :root { --grid-gap: 24px; }
@@ -328,6 +332,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .form-top-save::before { content: ''; position: absolute; inset: 4px 0; z-index: -1; background: var(--accent); border-radius: var(--radius-control); }
   .book-detail { grid-template-columns: 1fr; gap: 32px; }
   .detail-cover { width: 160px; justify-self: center; }
+  .detail-cover.book-cover-original img { max-height: 240px; }
   .detail-copy > h1 { font-size: 26px; margin-top: 12px; margin-bottom: 20px; }
   .book-metadata { font-size: 14px; }
   .reading-metadata { margin-top: 24px; gap: 12px; }

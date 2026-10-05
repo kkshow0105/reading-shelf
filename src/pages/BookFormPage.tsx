@@ -3,6 +3,7 @@ import { ArrowLeft, Upload, X } from 'lucide-react'
 import type { Book, BookDraft, Profile, ReadingStatus } from '@/types'
 import { statuses } from '@/types'
 import { blankDraft, toDraft, validateDraft } from '@/lib/books'
+import { defaultCropPosition } from '@/lib/covers'
 import { BookCover } from '@/components/BookCover'
 import { RatingInput } from '@/components/Stars'
 import { Button } from '@/components/ui/button'
@@ -19,7 +20,7 @@ export function BookFormPage({ profile, book, recoveredDraft, ownBooks, onNaviga
   const [duplicateConfirmed, setDuplicateConfirmed] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   useEffect(() => { onDraftChange(JSON.stringify(draft) === JSON.stringify(baseline.current) ? null : draft) }, [draft, onDraftChange])
-  const update = <K extends keyof BookDraft>(key: K, value: BookDraft[K]) => { setDraft(previous => ({ ...previous, [key]: value })); setErrors(previous => ({ ...previous, [key]: '' })) }
+  const update = <K extends keyof BookDraft>(key: K, value: BookDraft[K]) => { setDraft(previous => ({ ...previous, [key]: value, ...(key === 'cover' ? { cropPosition: defaultCropPosition() } : {}) })); setErrors(previous => ({ ...previous, [key]: '' })) }
   const back = () => onNavigate(book ? `/p/${profile.id}/books/${book.id}` : `/p/${profile.id}/shelf`)
   const save = () => {
     const found = validateDraft(draft)
@@ -42,7 +43,7 @@ export function BookFormPage({ profile, book, recoveredDraft, ownBooks, onNaviga
           if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { setImageError('请选择 JPEG、PNG 或 WebP 图片。'); return }
           if (file.size > 10 * 1024 * 1024) { setImageError('图片超过 10MB，请选择较小的文件。'); return }
           const url = URL.createObjectURL(file); onObjectURL(url); update('cover', url); setImageError('')
-        }} /><Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={17} aria-hidden="true" />{draft.cover ? '更换封面' : '选择封面'}</Button>{draft.cover && <Button onClick={() => update('cover', '')} aria-label="移除当前封面"><X size={16} aria-hidden="true" />移除封面</Button>}<p>保留整张封面，不强制裁切。<br />JPEG、PNG、WebP，最多 10MB。</p>{imageError && <p className="field-error" role="alert">{imageError}</p>}</div>
+        }} /><Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={17} aria-hidden="true" />{draft.cover ? '更换封面' : '选择封面'}</Button>{draft.cover && <Button onClick={() => update('cover', '')} aria-label="移除当前封面"><X size={16} aria-hidden="true" />移除封面</Button>}<p>保留原图，书架居中显示。<br />JPEG、PNG、WebP，最多 10MB。</p>{imageError && <p className="field-error" role="alert">{imageError}</p>}</div>
       </aside>
       <div className="form-fields"><section className="form-section"><div className="form-section-heading"><span>01</span><h2>这本书</h2></div><p className="required-note">标有 * 的项目为必填</p>
         <div className="field"><label htmlFor="title">书名 *</label><Input id="title" value={draft.title} maxLength={200} onChange={e => update('title', e.target.value)} {...fieldProps('title')} required />{errors.title && <p id="title-error" className="field-error">{errors.title}</p>}</div>
