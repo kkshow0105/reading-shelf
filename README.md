@@ -1,0 +1,70 @@
+# 私人书架 / Reading Shelf
+
+第三阶段：高保真前端原型。四个核心页面已实现，使用两个虚构阅读档案、12 + 8 条示例阅读记录与本地原创封面。**修改只存在于页面内存，刷新后恢复示例；没有登录、数据库、云同步或长期存储。**
+
+原有 `DESIGN.md`、`PRODUCT.md`、`AGENTS.md` 原样保留。当前用户已明确授权建立原型；规范中的 Supabase、PWA、完整备份等仍是后续目标。
+
+## 运行与检查
+
+需要 Node.js 20.19+ 或 22.12+。本机已经安装本项目依赖；在项目目录运行：
+
+```powershell
+npm.cmd run dev
+```
+
+打开 <http://127.0.0.1:5173/>。开发服务器仅绑定本机，不公开到网络。
+
+```powershell
+npm.cmd run build
+npm.cmd test
+```
+
+构建包含 TypeScript 检查；测试使用 Node 自带的测试运行器与 TypeScript 类型剥离，不安装测试框架。Node 22.12 会显示类型剥离的 experimental 提示，正常情况下不影响测试结果。
+
+## 技术与结构
+
+React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、Tailwind CSS 4.3.3、lucide-react 1.52.0。版本锁定在 `package.json` / `package-lock.json`；Tailwind 使用当前 Vite 插件方式，没有旧版 PostCSS / tailwind.config 初始化。
+
+| 位置 | 内容 |
+|---|---|
+| src/pages | 档案选择、书架、详情、添加 / 编辑 |
+| src/components | 顶栏、封面、星级、筛选与必要 UI 组件 |
+| src/components/ui | 按 shadcn/ui 模式改编的必要组件；使用独立 Radix 包，不安装整个聚合组件库 |
+| src/data/mock.ts | 两人独立阅读记录的示例数据工厂 |
+| src/types | 记录、档案、筛选与页面类型 |
+| src/lib/books.ts | 搜索、日期语义、筛选、排序与表单校验的纯函数 |
+| src/App.tsx | 薄的内存状态与 hash 页面导航；没有外部状态管理库 |
+| src/styles.css | DESIGN.md 对应的统一语义 tokens、双主题、字体和响应式布局 |
+| public/covers | 12 张原创 SVG 测试封面，不是出版社封面 |
+| public/fonts | Noto Serif SC / Noto Sans SC 精简 WOFF2、许可与来源记录 |
+| scripts | 封面生成与官方字体子集准备工具，均不在应用运行时执行 |
+| docs/QA.md | 实际浏览器 QA、修复与限制记录 |
+
+未来接入数据层时可替换数据来源并引入明确的保存 / 同步状态，保留 Book / Profile 类型和现有页面。不要把当前内存“保存”误当成正式数据持久化实现。
+
+## 已有交互
+
+搜索书名 / 作者 / 译者；筛选状态 / 星级 / 年份；五种排序；手机底部 Sheet 与 PC 菜单切换档案；内存添加 / 编辑 / 删除、删除撤销、表单校验、草稿保留、图片本地预览；浅色 / 深色 / 跟随系统。
+
+封面使用 `URL.createObjectURL` 做本机预览，不上传服务器。草稿、主题选择和记录都不写 localStorage、IndexedDB 或任何数据库。图片在页面生命周期结束时释放。
+
+没有 PWA manifest、Service Worker、离线缓存、JSON / CSV 功能或正式部署。本地资源不依赖随机图片服务，但未运行开发服务器时不承诺可离线启动应用。
+
+## 开发预览
+
+以下入口只用于原型 QA，不是新产品页面：
+
+- 空档案：<http://127.0.0.1:5173/?preview=empty#/p/chen/shelf>
+- Skeleton：<http://127.0.0.1:5173/?preview=loading#/p/lin/shelf>，点击“查看示例书架”退出。
+
+正常入口无预览参数，仍是 12 + 8 条记录。重新加载页面即可恢复所有原始示例数据。
+
+## 字体、封面与来源
+
+UI 只使用 Noto Serif SC 与 Noto Sans SC 两个主要家族，本地子集覆盖现有 UI 和示例文字，加载失败或新字符超出子集时使用 DESIGN.md 的系统 fallback。应用运行不请求 Google Fonts；字体准备脚本只向官方 Google Fonts 源请求这些公开测试文字，许可随文件保存。
+
+原创封面由 `scripts/generate-covers.py` 生成：书名、作者用于文学作品测试场景；人物、短评、日期均为虚构，元数据不代表某一具体出版版本。封面明确标注“原创测试封面”，不复用真实出版物版式、图片或标志。
+
+shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/components)，仅保留 Button、Input、Textarea、Dialog、Alert Dialog、Sheet、Dropdown Menu、Popover 所需接口；替换默认色彩、圆角、排版和动画。MIT 许可位于 `src/components/ui/LICENSE.txt`。
+
+本轮不推送，不创建 GitHub 仓库。请继续遵守三份规范，不自动开始 Supabase / 数据层开发。
