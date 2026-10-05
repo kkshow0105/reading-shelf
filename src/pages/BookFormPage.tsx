@@ -32,7 +32,7 @@ export function BookFormPage({ profile, book, recoveredDraft, ownBooks, onNaviga
   const showDates = draft.status !== '想读' || !!draft.startedOn || !!draft.finishedOn
   const today = new Date().toLocaleDateString('en-CA')
   return <main id="main-content" className="form-page page-shell page-enter" tabIndex={-1}>
-    <div className="page-nav"><Button onClick={back}><ArrowLeft size={18} aria-hidden="true" />{book ? '返回详情' : '取消'}</Button><Button className="compact-form-save" variant="primary" onClick={save}>保存</Button></div>
+    <div className="page-nav"><Button onClick={back}><ArrowLeft size={18} aria-hidden="true" />{book ? '返回详情' : '取消'}</Button><Button className="form-top-save" variant="primary" onClick={save}>保存</Button></div>
     <div className="form-intro"><span className="editorial-label">{book ? 'EDIT READING NOTES' : 'A NEW CHAPTER'}</span><h1>{book ? '编辑这本书' : '添一本书'}</h1><p>{book ? '记录属于' : '添加到'}{profile.name}的书架{recoveredDraft && <span className="draft-restored"> · 已恢复本轮草稿</span>}</p></div>
     <form className="book-form" onSubmit={e => { e.preventDefault(); save() }} noValidate>
       <aside className="cover-editor"><BookCover title={draft.title} author={draft.author} cover={draft.cover} className="form-cover" />

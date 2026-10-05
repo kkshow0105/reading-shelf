@@ -79,8 +79,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .icon-button { width: 48px; min-width: 48px; height: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-control); background: transparent; border: 0; color: var(--text-secondary); cursor: pointer; }
 .icon-button:hover { background: var(--surface-muted); }
 .profile-trigger { padding-inline: 8px; }
-.profile-mark { min-width: 48px; width: 48px; height: 48px; padding: 0; color: var(--text-primary); font-family: var(--font-serif); font-size: 20px; position: relative; }
-.profile-mark::after { content: ''; position: absolute; bottom: 7px; width: 20px; height: 1px; background: var(--accent); }
+.profile-mark { min-width: 48px; min-height: 48px; padding: 0 4px; gap: 4px; color: var(--text-primary); font-family: var(--font-serif); font-size: 20px; position: relative; }
+.profile-mark::after { content: ''; position: absolute; bottom: 7px; left: 4px; width: 20px; height: 1px; background: var(--accent); }
 .search-box { display: flex; align-items: center; min-height: 48px; min-width: 0; gap: 8px; color: var(--text-secondary); border-bottom: 1px solid var(--control-border); }
 .header-actions .search-box { width: 270px; }
 .search-box .input { min-width: 0; flex: 1; width: 100%; padding: 8px 0; border: 0; background: transparent; border-radius: 0; min-height: 46px; font-size: 14px; }
@@ -118,6 +118,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .shelf-toolbar { margin-top: 16px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .shelf-count { font-size: 14px; color: var(--text-secondary); }
 .shelf-tools { display: flex; align-items: center; gap: 8px; }
+.shelf-toolbar-actions { display: flex; align-items: center; }
+.density-trigger { display: none; }
 .shelf-tools .button { font-size: 14px; padding-inline: 12px; }
 .filter-count { color: var(--accent); font-size: 13px; }
 .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); column-gap: var(--grid-gap); row-gap: var(--grid-row-gap); }
@@ -137,6 +139,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .star-empty { color: var(--control-border); fill: none; }
 .book-date { font-size: 14px; line-height: 1.5; color: var(--text-secondary); margin-top: 8px; }
 .book-date time { font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 14px; }
+.date-compact { display: none; }
 .empty-state { min-height: 400px; max-width: 680px; margin-inline: auto; padding: 64px 0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
 .empty-rule { height: 1px; width: 32px; background: var(--control-border); margin-bottom: 12px; }
 .empty-state h2 { font-size: 24px; line-height: 1.5; }
@@ -207,7 +210,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .rating-caption { display: flex; align-items: center; gap: 16px; min-height: 48px; color: var(--text-secondary); font-size: 14px; }
 .rating-caption .button { font-size: 14px; }
 .form-actions { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 16px; }
-.compact-form-save { display: none; }
+.form-top-save { box-shadow: none; }
 
 /* shadcn/Radix behavior, Reading Shelf typography and shapes. */
 .overlay { position: fixed; inset: 0; z-index: 40; background: var(--scrim); }
@@ -272,7 +275,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 @media (max-width: 1024px) {
   .wordmark-english { display: none; }
-  .compact-add, .compact-form-save { display: inline-flex; }
+  .compact-add { display: inline-flex; }
   .header-actions { gap: 8px; }
   .shelf-heading { align-items: center; }
   .shelf-heading .compact-add { flex-shrink: 0; font-size: 14px; }
@@ -299,20 +302,30 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .shelf-heading h1 { margin: 0; font-size: 24px; }
   .shelf-heading .compact-add { padding-inline: 12px; }
   .shelf-toolbar { margin-top: 12px; margin-bottom: 24px; gap: 0; flex-wrap: wrap; }
-  .shelf-count { font-size: 13px; }
+  .shelf-count { font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+  .shelf-toolbar-actions { margin-left: auto; max-width: 100%; flex-wrap: wrap; }
+  .density-trigger { display: inline-flex; min-width: 48px; padding-inline: 8px; font-size: 14px; }
   .shelf-tools { margin-left: auto; gap: 4px; }
   .shelf-tools .button { padding-inline: 8px; font-size: 14px; }
   .clear-filters { order: 3; }
   .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .book-caption h2 { font-size: 17px; height: 51px; }
+  .shelf-page[data-density="compact"] .book-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 16px; }
+  .book-caption h2 { display: block; font-size: 17px; height: auto; white-space: nowrap; text-overflow: ellipsis; -webkit-line-clamp: unset; -webkit-box-orient: initial; }
   .book-date { font-size: 14px; }
   .book-date time { font-size: 14px; }
+  .shelf-page[data-density="compact"] .book-date { font-size: 13px; white-space: nowrap; }
+  .shelf-page[data-density="compact"] .book-date time { font-size: 13px; }
+  .shelf-page[data-density="compact"] .date-full { display: none; }
+  .shelf-page[data-density="compact"] .date-compact { display: inline; }
   .cover-fallback { padding: 16px; gap: 16px; }
   .cover-fallback strong { font-size: 20px; }
   .empty-state { padding: 40px 0; min-height: 380px; }
   .empty-state h2 { font-size: 22px; }
   .detail-page, .form-page { margin-top: 8px; }
   .page-nav { margin-bottom: 24px; }
+  /* Keep a 48px touch target around a quieter 40px painted save button. */
+  .form-top-save { position: relative; isolation: isolate; min-width: 56px; padding-inline: 8px; background: transparent; }
+  .form-top-save::before { content: ''; position: absolute; inset: 4px 0; z-index: -1; background: var(--accent); border-radius: var(--radius-control); }
   .book-detail { grid-template-columns: 1fr; gap: 32px; }
   .detail-cover { width: 160px; justify-self: center; }
   .detail-copy > h1 { font-size: 26px; margin-top: 12px; margin-bottom: 20px; }
@@ -341,6 +354,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 @media (max-width: 319px) {
   .book-grid { grid-template-columns: 1fr; }
+  .shelf-page[data-density] .book-grid { grid-template-columns: 1fr; }
   .shelf-tools { margin-left: 0; flex-wrap: wrap; }
   .header-inner { gap: 8px; }
   .wordmark { white-space: normal; max-width: 64px; min-width: 0; }

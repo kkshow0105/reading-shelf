@@ -12,6 +12,7 @@ import { BookFormPage } from './pages/BookFormPage'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './components/ui/dialog'
 import { Button } from './components/ui/button'
 import { useMediaQuery } from './lib/useMediaQuery'
+import type { MobileShelfDensity } from './components/DisplayDensityMenu'
 
 const getPath = () => window.location.hash.slice(1) || '/profiles'
 function parseRoute(path: string): Route {
@@ -30,6 +31,7 @@ export default function App() {
   const [path, setPath] = useState(getPath)
   const route = parseRoute(path)
   const [theme, setTheme] = useState<Theme>('system')
+  const [mobileDensity, setMobileDensity] = useState<MobileShelfDensity>('compact')
   const systemDark = useMediaQuery('(prefers-color-scheme: dark)')
   const [views, setViews] = useState<Record<string, ShelfView>>(() => Object.fromEntries(profiles.map(p => [p.id, { query: '', filters: emptyFilters(), sort: 'recent', scroll: 0 }])))
   const scrolls = useRef<Record<string, number>>({})
@@ -101,7 +103,7 @@ export default function App() {
   }
   return <>
     <Header profiles={profiles} profile={active} shelf={route.page === 'shelf'} query={active ? views[active.id].query : ''} onQuery={query => changeView({ query })} theme={theme} onTheme={setTheme} onNavigate={requestNavigate} />
-    {route.page === 'profiles' ? <ProfilesPage profiles={profiles} books={books} onNavigate={requestNavigate} /> : route.page === 'shelf' ? <ShelfPage profile={active!} books={books} {...views[active!.id]} onQuery={query => changeView({ query })} onFilters={filters => changeView({ filters })} onSort={sort => changeView({ sort })} onNavigate={requestNavigate} loading={loading} onFinishLoading={() => setLoading(false)} /> : route.page === 'new' || route.page === 'edit' && selectedBook ? <BookFormPage key={formKey} profile={active!} book={selectedBook} recoveredDraft={drafts[formKey]} ownBooks={books.filter(book => book.profileId === active!.id)} onDraftChange={handleDraft} onNavigate={requestNavigate} onSave={saveBook} onObjectURL={url => objectURLs.current.add(url)} /> : selectedBook ? <DetailPage profile={active!} book={selectedBook} onNavigate={requestNavigate} onDelete={deleteBook} /> : <main id="main-content" className="page-shell empty-state"><h1>这本书暂时无法打开。</h1><Button onClick={() => requestNavigate(`/p/${active!.id}/shelf`)}>返回书架</Button></main>}
+    {route.page === 'profiles' ? <ProfilesPage profiles={profiles} books={books} onNavigate={requestNavigate} /> : route.page === 'shelf' ? <ShelfPage profile={active!} books={books} {...views[active!.id]} density={mobileDensity} onDensityChange={setMobileDensity} onQuery={query => changeView({ query })} onFilters={filters => changeView({ filters })} onSort={sort => changeView({ sort })} onNavigate={requestNavigate} loading={loading} onFinishLoading={() => setLoading(false)} /> : route.page === 'new' || route.page === 'edit' && selectedBook ? <BookFormPage key={formKey} profile={active!} book={selectedBook} recoveredDraft={drafts[formKey]} ownBooks={books.filter(book => book.profileId === active!.id)} onDraftChange={handleDraft} onNavigate={requestNavigate} onSave={saveBook} onObjectURL={url => objectURLs.current.add(url)} /> : selectedBook ? <DetailPage profile={active!} book={selectedBook} onNavigate={requestNavigate} onDelete={deleteBook} /> : <main id="main-content" className="page-shell empty-state"><h1>这本书暂时无法打开。</h1><Button onClick={() => requestNavigate(`/p/${active!.id}/shelf`)}>返回书架</Button></main>}
     <footer className="site-footer page-shell"><span>READING SHELF</span><span>示例书房 · 本轮修改仅用于预览</span></footer>
     <Dialog open={pendingPath !== null} onOpenChange={open => { if (!open) { setPendingPath(null); pendingPathRef.current = null } }}><DialogContent onOpenAutoFocus={event => { event.preventDefault(); continueRef.current?.focus() }}><DialogTitle className="overlay-title">这几行，还没有保存。</DialogTitle><DialogDescription className="overlay-description">可以保留本轮草稿再离开，也可以继续写。草稿只在本轮预览中保留，刷新后会消失。</DialogDescription><div className="draft-dialog-actions"><Button ref={continueRef} variant="outline" onClick={() => { setPendingPath(null); pendingPathRef.current = null }}>继续编辑</Button><Button onClick={() => leaveForm(false)}>放弃草稿</Button><Button variant="primary" onClick={() => leaveForm(true)}>保留草稿并离开</Button></div></DialogContent></Dialog>
     {toast && <div className="toast" role="status" onMouseEnter={() => setToastPaused(true)} onMouseLeave={() => setToastPaused(false)} onFocusCapture={() => setToastPaused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setToastPaused(false) }}><span>{toast.message}</span>{toast.action && <Button onClick={toast.action}>{toast.actionLabel}</Button>}<Button className="icon-button" aria-label="关闭提示" onClick={() => setToast(null)}><X size={16} aria-hidden="true" /></Button></div>}

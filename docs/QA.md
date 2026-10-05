@@ -89,3 +89,19 @@ npm run build（含 TypeScript 检查）通过；Node 内置 4 项测试全部�
 本机截图位于 qa/：profiles-mobile.jpg、profiles-desktop.jpg、shelf-mobile-light.jpg、shelf-desktop-light.jpg、shelf-mobile-dark.jpg，以及 empty-mobile.jpg。截图目录不纳入 Git，以免把临时 QA 素材当成产品资源。最终交付还保留一个可运行浏览器预览。
 
 原有 DESIGN.md / PRODUCT.md / AGENTS.md 保留；新源码、配置、本地资源、许可证、README 与本记录构成原型基线。没有 push，没有创建远端仓库，也没有进入第四阶段。
+
+## 3.5 视觉验收收尾（2026-10-05）
+
+手机默认紧凑三列现已确认，舒展两列继续通过现有“显示”菜单切换；保持当前会话内状态，不新增持久化。书名 17px、作者 14px，单行 ellipsis；书名自然高度 25.5px，无第二行空白，书架不显示译者。
+
+390 × 844 实际检查书架、详情和默认添加页：三列 gap 16px，所有封面仍为 2:3；日期为单行次级 13px。本年显示“读完 · 09.28”“在读 · 09.24”“暂停 · 08.14”，已有跨年示例显示“读完 · 25.12.22”“弃读 · 24.09.12”，均没有条目内溢出。两列切换后仍显示“读完 · 2026.09.28”，详情保持完整起止日期及译者。
+
+手机顶栏显示完整“林予”及轻微下拉箭头，仍为文字与细短横线；点击打开原有 Sheet，Escape 关闭后焦点恢复到姓名入口。详情辅助文案统一为“阅读札记 / READING NOTES”，主体布局与 contain 展示保持不变。
+
+1366 × 768 实际检查详情、添加及编辑页：添加 / 编辑顶部操作行均有首屏可见的“保存”，位置约 y = 89px，命中高度 48px，沿用原 save 函数和页尾入口。手机顶部保存填色区域约 56 × 40px，命中区域 56 × 48px，酒红主色保留，无阴影。键盘 Enter 提交空表单后显示原有书名 / 作者必填提示，并聚焦书名；没有新增示例记录。深色按钮仍使用既有主题 token，未改深色结构。
+
+全部指定页面无横向滚动、明显错位或异常截断，首屏下方内容正常纵向滚动。额外复查 PC 书架：1366px 六列、1920px 七列，完整日期和 18px / 两行 54px 书名布局保持不变。字体加载正常，浏览器无 error / warn。
+
+npm run build（含 TypeScript 检查）通过，现有 5 项 Node 测试全部通过。最初沙箱中 Node 读取安装目录出现 EPERM，使用获准的沙箱外现有命令复验通过；没有安装依赖或浏览器。没有完成真机、屏幕阅读器或真实文字放大测试，仍保留前述验证限制。
+
+本轮实际截图：qa/polish-shelf-mobile-390x844.jpg、qa/polish-detail-mobile-390x844.jpg、qa/polish-add-mobile-390x844.jpg、qa/polish-detail-desktop-1366x768.jpg、qa/polish-add-desktop-1366x768.jpg。截图为真实页面浅色首屏，不纳入 Git。PRODUCT.md 本轮未修改；未进入 Supabase、数据库、PWA 或其他数据层开发。
