@@ -139,3 +139,29 @@ SQL仅作静态审查：四表RLS、列级授权、复合外键、DB时间 / 删
 UI冻结检查：App、全部页面 / 组件、styles.css、现有Book/Profile类型、mock、DESIGN.md与第三阶段对比无diff；原页面未导入新client / repository，仍使用mock。没有重做视觉或本轮整套截图，也没有实现4B数据接入。真实Database类型尚未生成；官方生成流程与迁移 / bucket / 管理员初始化步骤记录在 SUPABASE-4A.md。
 
 PRODUCT.md 与 README明确完整备份为包含manifest、结构化数据和covers原图的ZIP；JSON仅为结构化数据备份。没有实现导出、PWA、持久化、永久删除或定时清理。
+
+## 4A.5 真实远端基础验证（2026-10-06）
+
+目标reading-shelf / agtkrlpiixniouipwdxr / ap-northeast-1已通过官方CLI项目列表、link ref和SQL干净性核验。项目CLI稳定版2.119.0进入dev dependency。既有本轮package/CLI配置改动保留；没有改Clash、Windows网络、UI、CSS、mock、DESIGN.md或用户Book/Profile模型。
+
+部署：初次dry-run仅两份预期SQL，正式push成功，四表 / 6个FK（含复合FK） / 9个索引 / 4个trigger / 全表RLS真实存在。17项原pgTAP安全断言全部通过；新增失败断言抛错门禁，避免CLI仅返回exit0却漏掉not ok。所有测试事务rollback，包括临时pgTAP与fixture，没有持久化测试授权。
+
+扩展约束套件真实测试rating NULL/1/5允许、0/6拒绝；五种status允许、非法值拒绝；x/y 0/0.5/1允许、-0.1/1.1分别拒绝；空书名/作者/家庭名拒绝，profiles家庭FK和membership联合PK正确，created_at默认生成、updated_at递增且created_at保留。
+
+发现并修复：删除Auth用户后，books.deleted_by的ON DELETE SET NULL被原trigger恢复旧actor，触发23503。新增前滚migration 20261006000100_deleted_actor_fk_cleanup.sql，只让外键合法NULL保持，不修改前两份SQL、不删书、不扩GRANT/RLS。重新dry-run / push后，原17项与扩展约束（含Auth actor清理）全部复测通过。
+
+真实Auth/Data API：临时A(owner)、B(member)同家庭，Outside属另一测试家庭。A/B能读household、两个profiles和books，均可在两个档案新增、编辑；数据归属仍独立。软删除由DB记时间与真实Auth actor、默认listBooks排除删除、可恢复。过期updated_at条件更新返回conflict，不覆盖。Outside通过原始SDK请求读不到目标家庭，插入被RLS拒绝，编辑/软删返回零行，原记录不变。未出现42P17或policy recursion。
+
+GRANT实测：anon四表select均42501；成员books/profiles必要操作正常。books hard DELETE、membership INSERT/UPDATE/DELETE均42501。目录核查anon/authenticated不能EXECUTE两个trigger函数，二者非SECURITY DEFINER且search_path固定空；deleted_by不可由客户端写。授权仍为显式列级INSERT/UPDATE，没有GRANT ALL。
+
+Storage实测：通过Storage API初始化private book-covers，10MiB及三种MIME限制符合预期。合法成员上传 / 跨成员读取成功，下载字节与原图一致；Outside读取 / 上传失败；同路径upsert:false重复、upsert:true覆盖、object UPDATE和MOVE失败，DELETE返回拒绝/零删除且原图仍可读。所有写入、移动、删除与清理仅用Storage API，没有storage.objects DML。
+
+签名URL：默认300秒链接可读取；专门1秒链接在2.2秒后实测失效。DB只保留相对path与原文件名。封面替换上传唯一新path后基于原revision更新成功，旧原图保留；再用过期revision替换返回conflict，原引用不变、新上传原图保留。软删后封面仍可读取，支持恢复。
+
+清理：finally仅针对本轮ledger中的UUID与路径，以Storage API删除测试文件，按关联顺序删除测试book/profile/member/household，Auth Admin API删除临时用户；SQL独立确认临时Auth UUID与业务/Storage记录无残留。没有用真实邮箱、真实书籍或邮件发送，没有建立正式家庭。
+
+类型与drift：官方CLI真实生成src/data/remote/database.types.ts，文件由生成脚本自动标识、不手工改字段；集中client/repository/service使用Database泛型，TypeScript编译通过。远端三个history版本及语句与本地一致，四表/RLS/函数授权/策略数9+2/private bucket目录验证通过，未发现本项目意外drift；未改系统schema或使用repair。
+
+环境与smoke：.env.local仅真实URL/publishable key且ignored，Auth settings验证key有效；Vite SSR加载现有集中client，未登录读取books被42501拒绝。管理员key只在进程内存/初始化子进程临时环境，任何原始凭据日志均抑制。qa/下ledger/report仅含非敏感测试标识/结果且ignored。
+
+最终unit tests 17/17通过，production build通过。远端API结果为12组PASS，包括清理；SQL约束、安全与GRANT测试为真实远端执行，不再仅静态。UI、CSS和导航源码均未动，没有4B接入、登录UI、备份导出、PWA或离线同步。正式Auth用户/家庭初始化留待下一次明确授权。

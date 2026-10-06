@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from './database.types.ts'
 import type { BookDraft } from '../../types/index.ts'
 import { DataAccessError, draftColumns, revision, uuid } from './contracts.ts'
 import type { MutationResult, OriginalCover } from './contracts.ts'
@@ -9,10 +10,10 @@ export function checkApiError(error: { code?: string; message?: string } | null)
   if (error) throw new DataAccessError(error.code || 'request_failed', '数据请求失败；保留输入后重试。')
 }
 // Household is locked into each repository instance, never taken from mutable UI state.
-export function createRepositories(client: SupabaseClient, householdId: string) {
+export function createRepositories(client: SupabaseClient<Database>, householdId: string) {
   uuid(householdId)
   const bookQuery = () => client.from('books').select('*').eq('household_id', householdId)
-  const write = async (id: string, profileId: string, previousUpdatedAt: string, columns: Record<string, unknown>, deleted = false): Promise<MutationResult> => {
+  const write = async (id: string, profileId: string, previousUpdatedAt: string, columns: Database['public']['Tables']['books']['Update'], deleted = false): Promise<MutationResult> => {
     uuid(id); uuid(profileId); revision(previousUpdatedAt)
     let query = client.from('books').update(columns).eq('id', id).eq('household_id', householdId)
       .eq('profile_id', profileId).eq('updated_at', previousUpdatedAt)

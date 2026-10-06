@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from './database.types.ts'
 import { readFileSync } from 'node:fs'
 import { blankDraft } from '../../lib/books.ts'
 import { readSupabaseConfig } from '../../lib/supabase-config.ts'
@@ -58,7 +59,7 @@ test('映射保留原始 revision 精度，拒绝跨家庭和跨档案返回', (
 // This is not a database or RLS integration test; no network request is sent.
 function fixture(respond: (request: { url: URL; init: RequestInit; body: unknown }) => Response | Promise<Response>) {
   const requests: { url: URL; init: RequestInit; body: unknown }[] = []
-  const client = createClient('https://fixture.supabase.co', 'sb_publishable_test_fixture', {
+  const client = createClient<Database>('https://fixture.supabase.co', 'sb_publishable_test_fixture', {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { fetch: async (input, init = {}) => {
       const request = { url: new URL(String(input)), init, body: typeof init.body === 'string' ? JSON.parse(init.body) : init.body }

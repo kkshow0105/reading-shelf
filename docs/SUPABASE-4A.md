@@ -1,5 +1,19 @@
 # 4A：Supabase 数据基础、安全与迁移准备
 
+## 4A.5 完成状态（2026-10-06）
+
+唯一已核验项目：reading-shelf / agtkrlpiixniouipwdxr / ap-northeast-1，CLI 2.119.0 为项目 dev dependency。用户完成 CLI 登录；没有输出或将账号 token / 数据库密码 / 管理员 key 写入项目。已 link、干净性检查、dry-run 与正式 push；未运行 seed / reset / repair / config push，也没有改网络设置或其他项目。
+
+远端 history：20261005000100、20261005000200、20261006000100。前两份 SQL 保持原样。第三份 `20261006000100_deleted_actor_fk_cleanup.sql` 修复真实事务测试发现的错误：Auth 删除时 ON DELETE SET NULL 被删除 trigger 填回旧 actor，导致外键拒绝。现在合法的 NULL 清理保留，普通客户端仍不能写 deleted_by，权限 / RLS 没有扩大，阅读记录与封面保留。
+
+真实 Database 类型已生成到 src/data/remote/database.types.ts，并接入 createClient<Database>、repository / service；本文后续“未生成”“未执行”的段落是保留的4A历史状态，当前以本节与 QA.md 的4A.5记录为准。
+
+真实验证：17项 pgTAP权限/RLS回滚断言、数据库边界与FK/时间/actor回滚套件、12组真实Auth/Data API/Storage验证全部通过。A/B同家庭全档案读写、Outside越权、anon与hard DELETE、软删除/恢复、原始revision冲突、签名URL过期、原图字节与替换冲突均已验证。book-covers通过既有初始化脚本的Storage API建立，private、10MiB、JPEG/PNG/WebP；没有直接写storage.objects。
+
+测试账号使用虚构邮箱且管理员直接确认，无邮件发送；用户、家庭、档案、书籍、membership和全部测试文件已清理。未建立任何正式家庭数据。数据库schema/catalog核查通过，三份远端history语句与本地SQL规范化比较一致；未发现本项目范围内意外drift，未为了系统schema差异做repair。
+
+.env.local已写URL和publishable key且确认ignored；真实key不入报告、源码、测试或Git。管理员key仅用于测试进程与初始化子进程的临时环境，没有文件持久化。集中client通过Vite SSR载入完成匿名smoke，UI未导入数据层，继续mock。Unit tests 17/17及production build通过。部署验证记录见docs/QA.md；4B仍需用户另行授权。
+
 状态：本地代码 / SQL 已准备，尚未部署。开始时 Git clean（eff9eac）；未发现 CLI、Docker、supabase/、env 配置或 project link。未找到 SUPABASE_ACCESS_TOKEN 或旧 token 文件；未读取系统凭据库，因此不把“未发现迹象”说成确定已退出所有 Supabase 登录。没有查询账户项目列表，也没有创建、link 或修改任何远端项目。
 
 DESIGN.md 的视觉规范冻结；其中尚未实现的 JSON“完整备份”和30天恢复文案，数据语义以本轮 PRODUCT.md 的 ZIP / 软删除修正为准。没有改动任何已验收页面或样式。

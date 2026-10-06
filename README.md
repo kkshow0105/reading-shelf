@@ -1,6 +1,6 @@
 # 私人书架 / Reading Shelf
 
-第三阶段高保真 UI 已冻结；4A 新增独立 Supabase 数据基础，尚未部署到数据库或接入 UI。四个核心页面继续使用两个虚构阅读档案、12 + 8 条示例记录与本地原创封面。**页面修改仍只存在于内存，刷新后恢复示例；没有真实登录、云同步或长期存储。**
+第三阶段高保真 UI 已冻结；4A.5 的独立 Supabase 数据基础已部署并完成真实验证，尚未接入 UI。四个核心页面继续使用两个虚构阅读档案、12 + 8 条示例记录与本地原创封面。**页面修改仍只存在于内存，刷新后恢复示例；页面尚未接入真实登录、云同步或长期存储。**
 
 第三阶段首次基线保留了原有三份规范；本次按用户补充的非破坏性封面规则同步更新 `DESIGN.md` 与 `PRODUCT.md`，`AGENTS.md` 不变。规范中的 Supabase、PWA、完整备份等仍是后续目标。
 
@@ -67,12 +67,16 @@ UI 只使用 Noto Serif SC 与 Noto Sans SC 两个主要家族，本地子集覆
 
 shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/components)，仅保留 Button、Input、Textarea、Dialog、Alert Dialog、Sheet、Dropdown Menu、Popover 所需接口；替换默认色彩、圆角、排版和动画。MIT 许可位于 `src/components/ui/LICENSE.txt`。
 
-## 4A 数据基础
+## 4A / 4A.5 数据基础
 
-只新增官方 `@supabase/supabase-js` 2.117.2；未安装 Supabase CLI 或 Docker。开始检查时没有 Supabase 配置、项目关联或登录凭据迹象，也没有执行远端请求或 migration。完整结构、安全边界、部署前检查与生成类型流程见 [4A 说明](docs/SUPABASE-4A.md)。
+官方 SDK `@supabase/supabase-js` 2.117.2、项目 dev dependency `supabase` CLI 2.119.0 均锁定版本；没有安装 Docker / PostgreSQL。唯一关联项目为 `reading-shelf` / `agtkrlpiixniouipwdxr` / Tokyo。已正式部署三份 migration，包括真实测试发现的 deleted_by 外键清理修复；没有扩大客户端权限。完整结构、测试结果和限制见 [4A / 4A.5 说明](docs/SUPABASE-4A.md)。
 
 `supabase/migrations/` 保存表、约束、索引、触发器及 RLS / Storage policies；`src/data/remote/` 包含映射、repository 和封面服务；`src/lib/supabase.ts` 是惰性 client，只有显式调用才读取配置。现有页面没有导入它。`.env.example` 仅有占位符，真实值放入已忽略的 `.env.local`。管理员 secret 只在初始化终端环境使用，绝不使用 VITE 前缀或提交。
 
 数据库备份不包含 Storage 原始文件，不能代替 App 完整备份。未来完整备份为 ZIP（manifest.json、结构化数据、covers/ 原图）；JSON 单独导出是结构化数据备份，CSV 只用于表格导出。本阶段只定义方案，没有实现导出。[Supabase 官方备份说明](https://supabase.com/docs/guides/platform/backups)
 
 页面保持第三阶段 mock 原型，不自动导入示例到生产数据库，不进入 4B，不 push。
+
+真实数据库类型为 `src/data/remote/database.types.ts`，通过 `node scripts/generate-database-types.mjs` 从已核验的真实 public schema 生成，禁止手工编辑。集中 client / repository / service 已使用该 Database 泛型。
+
+`node --experimental-strip-types scripts/verify-supabase-remote.mjs` 是明确授权后才运行的远端验证工具，限定唯一 ref，要求业务表和封面为空。使用虚构临时 Auth 用户和原图，最后按本轮 ID / 路径清理；不能在已有家庭数据的环境随意运行。凭据只在内存，测试 ledger / report 在被忽略的 qa/，真实 publishable key 仅在已忽略的 .env.local。没有初始化正式家庭账号或档案，下一阶段另行授权。

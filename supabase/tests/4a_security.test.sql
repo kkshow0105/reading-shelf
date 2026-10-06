@@ -1,7 +1,15 @@
--- LOCAL DISPOSABLE database only, after applying migrations.
--- Not executed in 4A: this machine has no Docker/Supabase PostgreSQL.
+-- Explicitly verified Reading Shelf project or disposable local DB only.
+-- Use transaction rollback; the CLI runner must reject any failed TAP assertion.
 -- All fixtures roll back. No production mock import and no Storage object DML.
 begin;
+set local search_path = public, extensions;
+create function pg_temp.assert_tap(result text) returns text
+language plpgsql set search_path = '' as $gate$
+begin
+  if result like 'not ok%' then raise exception '%', result; end if;
+  return result;
+end;
+$gate$;
 create extension if not exists pgtap with schema extensions;
 grant usage on schema extensions to anon, authenticated;
 select extensions.plan(17);
@@ -23,35 +31,35 @@ insert into public.profiles (id, household_id, name) values
 insert into public.books (id, household_id, profile_id, title, author) values
  ('d0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Test book', 'Test author'),
  ('d0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', 'Test book', 'Test author');
-select extensions.is((select count(*)::int from pg_class where oid in
- ('public.households'::regclass, 'public.household_members'::regclass, 'public.profiles'::regclass, 'public.books'::regclass) and relrowsecurity), 4, 'all application tables have RLS');
-select extensions.ok(not has_table_privilege('authenticated', 'public.books', 'DELETE'), 'hard DELETE has no grant');
-select extensions.ok(not has_table_privilege('authenticated', 'public.household_members', 'INSERT'), 'membership INSERT has no grant');
-select extensions.ok(not has_column_privilege('authenticated', 'public.books', 'household_id', 'UPDATE'), 'household reassignment has no grant');
-select extensions.ok(not has_column_privilege('authenticated', 'public.books', 'profile_id', 'UPDATE'), 'profile reassignment has no grant');
-select extensions.is((select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'
-  and policyname like 'reading_shelf_covers_%' and cmd in ('UPDATE','DELETE')), 0, 'no cover overwrite or delete policy');
+select pg_temp.assert_tap(extensions.is((select count(*)::int from pg_class where oid in
+ ('public.households'::regclass, 'public.household_members'::regclass, 'public.profiles'::regclass, 'public.books'::regclass) and relrowsecurity), 4, 'all application tables have RLS'));
+select pg_temp.assert_tap(extensions.ok(not has_table_privilege('authenticated', 'public.books', 'DELETE'), 'hard DELETE has no grant'));
+select pg_temp.assert_tap(extensions.ok(not has_table_privilege('authenticated', 'public.household_members', 'INSERT'), 'membership INSERT has no grant'));
+select pg_temp.assert_tap(extensions.ok(not has_column_privilege('authenticated', 'public.books', 'household_id', 'UPDATE'), 'household reassignment has no grant'));
+select pg_temp.assert_tap(extensions.ok(not has_column_privilege('authenticated', 'public.books', 'profile_id', 'UPDATE'), 'profile reassignment has no grant'));
+select pg_temp.assert_tap(extensions.is((select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'
+  and policyname like 'reading_shelf_covers_%' and cmd in ('UPDATE','DELETE')), 0, 'no cover overwrite or delete policy'));
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', true);
-select extensions.is((select count(*)::int from public.profiles), 2, 'non-owner can read both family profiles');
-select extensions.is((select count(*)::int from public.books), 1, 'non-owner cannot read other household books');
-select extensions.is((select count(*)::int from public.household_members), 1, 'only own membership visible, no recursive RLS');
-select extensions.lives_ok($q$update public.books set notes = 'member update' where id = 'd0000000-0000-0000-0000-000000000001'$q$, 'member can edit family book');
-select extensions.throws_ok($q$insert into public.books (household_id, profile_id, title, author)
- values ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'bad', 'bad')$q$, '23503', null, 'composite FK rejects wrong profile household');
-select extensions.throws_ok($q$insert into public.books (household_id, profile_id, title, author)
- values ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', 'bad', 'bad')$q$, '42501', null, 'RLS rejects cross-household insertion');
-select extensions.lives_ok($q$insert into public.books (household_id, profile_id, title, author, status, finished_on)
- values ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002', 'only finish', 'test', 'finished', '2025-01-01')$q$, 'finished date without start is valid');
-select extensions.throws_ok($q$delete from public.books where id = 'd0000000-0000-0000-0000-000000000001'$q$, '42501', null, 'hard DELETE rejected');
+select pg_temp.assert_tap(extensions.is((select count(*)::int from public.profiles), 2, 'non-owner can read both family profiles'));
+select pg_temp.assert_tap(extensions.is((select count(*)::int from public.books), 1, 'non-owner cannot read other household books'));
+select pg_temp.assert_tap(extensions.is((select count(*)::int from public.household_members), 1, 'only own membership visible, no recursive RLS'));
+select pg_temp.assert_tap(extensions.lives_ok($q$update public.books set notes = 'member update' where id = 'd0000000-0000-0000-0000-000000000001'$q$, 'member can edit family book'));
+select pg_temp.assert_tap(extensions.throws_ok($q$insert into public.books (household_id, profile_id, title, author)
+ values ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'bad', 'bad')$q$, '23503', null, 'composite FK rejects wrong profile household'));
+select pg_temp.assert_tap(extensions.throws_ok($q$insert into public.books (household_id, profile_id, title, author)
+ values ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', 'bad', 'bad')$q$, '42501', null, 'RLS rejects cross-household insertion'));
+select pg_temp.assert_tap(extensions.lives_ok($q$insert into public.books (household_id, profile_id, title, author, status, finished_on)
+ values ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002', 'only finish', 'test', 'finished', '2025-01-01')$q$, 'finished date without start is valid'));
+select pg_temp.assert_tap(extensions.throws_ok($q$delete from public.books where id = 'd0000000-0000-0000-0000-000000000001'$q$, '42501', null, 'hard DELETE rejected'));
 update public.books set deleted_at = '2000-01-01' where id = 'd0000000-0000-0000-0000-000000000001';
-select extensions.ok((select deleted_at > '2020-01-01' and deleted_by = auth.uid() from public.books where id = 'd0000000-0000-0000-0000-000000000001'), 'database determines soft-delete timestamp and actor');
+select pg_temp.assert_tap(extensions.ok((select deleted_at > '2020-01-01' and deleted_by = auth.uid() from public.books where id = 'd0000000-0000-0000-0000-000000000001'), 'database determines soft-delete timestamp and actor'));
 update public.books set deleted_at = null where id = 'd0000000-0000-0000-0000-000000000001';
-select extensions.ok((select deleted_at is null and deleted_by is null from public.books where id = 'd0000000-0000-0000-0000-000000000001'), 'restore preserves record and clears deletion metadata');
+select pg_temp.assert_tap(extensions.ok((select deleted_at is null and deleted_by is null from public.books where id = 'd0000000-0000-0000-0000-000000000001'), 'restore preserves record and clears deletion metadata'));
 reset role;
 set local role anon;
-select extensions.ok(not has_table_privilege(current_user, 'public.books', 'SELECT'), 'anonymous access has no grant');
+select pg_temp.assert_tap(extensions.ok(not has_table_privilege(current_user, 'public.books', 'SELECT'), 'anonymous access has no grant'));
 reset role;
 select * from extensions.finish();
 rollback;

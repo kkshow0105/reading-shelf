@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from './database.types.ts'
 import type { BookScope, OriginalCover } from './contracts.ts'
 import { DataAccessError } from './contracts.ts'
 import { COVER_BUCKET, MAX_COVER_BYTES, assertCoverPath, coverPath } from './cover-path.ts'
@@ -12,7 +13,7 @@ async function validateOriginal(file: File) {
   const webp = String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP'
   if (!(file.type === 'image/jpeg' && jpeg || file.type === 'image/png' && png || file.type === 'image/webp' && webp)) throw new DataAccessError('invalid_cover', '封面类型和文件头不匹配。')
 }
-export function createCoverService(client: SupabaseClient) {
+export function createCoverService(client: SupabaseClient<Database>) {
   return {
     async uploadOriginalCover(scope: BookScope, file: File): Promise<OriginalCover> {
       const path = coverPath(scope, file.type, crypto.randomUUID())
