@@ -192,7 +192,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      bootstrap_household: {
+        Args: { p_household_name: string; p_profile_names: string[] }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -165,3 +165,31 @@ Storage实测：通过Storage API初始化private book-covers，10MiB及三种MI
 环境与smoke：.env.local仅真实URL/publishable key且ignored，Auth settings验证key有效；Vite SSR加载现有集中client，未登录读取books被42501拒绝。管理员key只在进程内存/初始化子进程临时环境，任何原始凭据日志均抑制。qa/下ledger/report仅含非敏感测试标识/结果且ignored。
 
 最终unit tests 17/17通过，production build通过。远端API结果为12组PASS，包括清理；SQL约束、安全与GRANT测试为真实远端执行，不再仅静态。UI、CSS和导航源码均未动，没有4B接入、登录UI、备份导出、PWA或离线同步。正式Auth用户/家庭初始化留待下一次明确授权。
+
+## 4B-1 私人家庭访问（2026-10-06）
+
+从 7e7ddb5 干净基线开始，用户明确授权本阶段 Auth / Household / Profiles / Session。公开注册由用户关闭，Auth settings 实测 disable_signup=true、external.email=true。唯一项目 reading-shelf / agtkrlpiixniouipwdxr / Tokyo；没有修改 Clash、Windows 网络或其他项目。
+
+新 migration 20261006000200_household_bootstrap.sql 经静态 SQL / SECURITY DEFINER / search_path / GRANT 审查，官方 CLI dry-run 唯一列出本文件，再 push。远端函数 owner=postgres、SECURITY DEFINER=true、search_path 空，ACL 仅 postgres 与 authenticated，anon_execute=false、authenticated_execute=true。三个旧 migration 未改，membership 普通写权限保持拒绝。真实 generated Database 类型重新生成并含 RPC。
+
+全部 26 项 unit tests 通过，production build（TypeScript + Vite）通过。Vite 有单 JS chunk 大于 500kB 的体积提醒（约584kB、gzip173kB），不影响构建，未为此重构或增加依赖。新测试覆盖 auth state / 中文错误、activeProfile 归属、归档排除、稳定排序、初始化输入与 already_initialized 恢复，另验证临时网络失败保留 SDK session、确定失效才 signOut。
+
+远端 scripts/verify-household-auth.mjs：真实 temporary Auth 登录 / 当前用户 / session 恢复、anon RPC / membership 拒绝；12 个非法参数（null / 空白 / 过长 / 0 或 11 项 / null 姓名 / 多维数组）均拒绝且没有半成品；成功创建1个Household、当前用户owner和两个trim后的Profile；重复拒绝且service恢复已有membership；额外user_id / role / household_id参数拒绝；membership INSERT继续42501、跨家庭profiles空返回；两个并发请求恰好一个成功、另一个already_initialized；归档过滤；创建后强制事务失败全部回滚；官方signOut后session为空。最后精确清理本次UUID，临时Auth / Household / Profile / membership残留0，无Books和Storage测试文件。
+
+真实浏览器验收（既有Codex内置浏览器，不安装浏览器 / Playwright）：
+
+- 390×844 Login：实际宽度390、document宽度390、字体loaded；输入49.33px、按钮48px；单列无卡片，无横向滚动或文字截断。
+- 1366×768 Login：实际宽度与document宽度1366，字体loaded；开放双栏与已有暖纸色 / 字体，主按钮首屏可见。
+- 390×844 Bootstrap：宽度390无横向溢出，字体loaded，三个输入49.33px、主按钮48px，按钮底部约726px在首屏；两个姓名空白、默认私人书房。
+- 1366×768 Bootstrap：宽度1366无横向溢出，按钮底部约660px在首屏；字段 / 简短说明清晰，无后台工具条。
+- 未登录输入示例书籍深链接实际返回登录，不呈现mock或请求私人表。
+- 临时账号在真实Login登录后进入Bootstrap；页面刷新保留SDK session。本人流程的模拟使用虚构临时名字，实际提交后进入真实Profiles页（隐藏计数和最近封面，不显示虚假0本）。
+- 手机Sheet、PC菜单切换真实姓名，刷新恢复选择；退出回登录，再登录停在Profiles选择而不继承已清除的activeProfile。期间没有Book/Storage读写UI。
+- 768×1024、1920×1080档案页补查无横向溢出；手机登录页深色实际查看正常，最终恢复浅色。
+- 键盘邮箱Tab→密码Tab→登录顺序正常、焦点可见。内置浏览器文字放大快捷键未实际改变缩放，**不能宣称完成200%文字放大或真机键盘遮挡测试**；Bootstrap深色、屏幕阅读器未实测。
+- 最后检查浏览器捕获error / warn为0，未检测到敏感凭据日志。没有输出正式账号密码；临时QA凭据只在进程内存，经一次性loopback管道供控制器使用，不写文件或Git。
+
+要求的四张实际浅色首屏截图（qa/忽略，不入Git）：
+qa/4b1-login-390x844.jpg、qa/4b1-login-1366x768.jpg、qa/4b1-bootstrap-390x844.jpg、qa/4b1-bootstrap-1366x768.jpg。
+
+浏览器临时账号及其Household / Profiles已精确清理，SQL再次核实Auth用户、Household、membership、Profile、Book、Storage对象总数均0。正式家庭账号尚未创建，正式登录 / Household / 两个Profile姓名尚待用户本人完成，不将临时测试说成正式验收。当前正式入口只做真实档案准备状态；第三阶段书籍mock原样保存在PrototypeApp，不挂载、不绑定真实UUID，不上传。没有新增依赖，没有进入4B-2。

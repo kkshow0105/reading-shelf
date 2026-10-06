@@ -23,6 +23,8 @@ export function mapProfile(value: unknown, householdId: string): StoredProfile {
   const row = record(value)
   const household = uuid(text(row, 'household_id'))
   if (household !== uuid(householdId)) throw new Error('返回档案的家庭归属不符。')
-  return { householdId: household, updatedAt: revision(text(row, 'updated_at')), archivedAt: text(row, 'archived_at', true) || null,
+  if (typeof row.sort_order !== 'number' || !Number.isInteger(row.sort_order)) throw new Error('档案顺序无效。')
+  return { householdId: household, sortOrder: row.sort_order, createdAt: text(row, 'created_at'),
+    updatedAt: revision(text(row, 'updated_at')), archivedAt: text(row, 'archived_at', true) || null,
     profile: { id: uuid(text(row, 'id')), name: text(row, 'name'), description: '' } }
 }

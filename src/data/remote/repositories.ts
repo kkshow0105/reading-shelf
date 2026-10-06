@@ -27,7 +27,7 @@ export function createRepositories(client: SupabaseClient<Database>, householdId
     profiles: {
       async listProfiles() {
         const { data, error } = await client.from('profiles').select('*').eq('household_id', householdId)
-          .is('archived_at', null).order('sort_order').order('id')
+          .is('archived_at', null).order('sort_order').order('created_at').order('id')
         checkApiError(error)
         return (data || []).map(row => mapProfile(row, householdId))
       },

@@ -12,7 +12,7 @@ export interface StoredBook {
   deletedBy: string | null
   originalCover: OriginalCover | null
 }
-export interface StoredProfile { profile: Profile; householdId: string; updatedAt: string; archivedAt: string | null }
+export interface StoredProfile { profile: Profile; householdId: string; sortOrder: number; createdAt: string; updatedAt: string; archivedAt: string | null }
 export type MutationResult = { kind: 'saved'; record: StoredBook } | { kind: 'conflict' }
 export class DataAccessError extends Error {
   code: string
