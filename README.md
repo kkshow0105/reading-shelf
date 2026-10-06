@@ -1,8 +1,8 @@
 # 私人书架 / Reading Shelf
 
-第三阶段书籍视觉已冻结；4A.5 数据基础和 4B-1 登录 / 家庭初始化已部署。当前入口使用真实 Supabase Auth、Household、Profiles；正式家庭账号由用户手动创建，尚待首次本人登录验收。**本轮没有接入真实 Books 或封面，选中档案后停在准备完成状态。**
+第三阶段书籍视觉已冻结；4A.5 数据基础和 4B-1 登录 / 家庭初始化已部署。当前入口使用真实 Supabase Auth、Household、Profiles；正式家庭账号由用户手动创建并本人完成首次登录和初始化，已验收 1 个书房、1 个 owner membership、2 个档案。**尚未接入真实 Books 或封面，选中档案后停在准备完成状态。**
 
-第三阶段首次基线保留了原有三份规范；本次按用户补充的非破坏性封面规则同步更新 `DESIGN.md` 与 `PRODUCT.md`，`AGENTS.md` 不变。规范中的 Supabase、PWA、完整备份等仍是后续目标。
+第三阶段规范与书籍原型继续保留；Supabase Auth / 家庭与档案基础已按用户授权接入。真实书籍、封面 UI、PWA 与完整备份仍是后续目标。
 
 ## 运行与检查
 
@@ -81,7 +81,7 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 
 真实数据库类型为 `src/data/remote/database.types.ts`，通过 `node scripts/generate-database-types.mjs` 从已核验的真实 public schema 生成，禁止手工编辑。集中 client / repository / service 已使用该 Database 泛型。
 
-`node --experimental-strip-types scripts/verify-supabase-remote.mjs` 是明确授权后才运行的远端验证工具，限定唯一 ref，要求业务表和封面为空。使用虚构临时 Auth 用户和原图，最后按本轮 ID / 路径清理；不能在已有家庭数据的环境随意运行。凭据只在内存，测试 ledger / report 在被忽略的 qa/，真实 publishable key 仅在已忽略的 .env.local。没有初始化正式家庭账号或档案，下一阶段另行授权。
+`node --experimental-strip-types scripts/verify-supabase-remote.mjs` 是明确授权后才运行的 4A.5 远端验证工具，限定唯一 ref，要求业务表和封面为空。使用虚构临时 Auth 用户和原图，最后按本轮 ID / 路径清理；当前已存在正式家庭数据，不能随意运行该工具。凭据只在内存，测试 ledger / report 在被忽略的 qa/，真实 publishable key 仅在已忽略的 .env.local。
 
 ## 4B-1 私人家庭访问
 
@@ -89,4 +89,4 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 
 首次登录没有 membership 时，填写书房名称及两个姓名，通过新 bootstrap_household RPC 原子创建当前用户的 owner membership、Household 和 Profiles。档案页与 Header 使用真实姓名，隐藏尚未接入的书籍统计 / 最近封面。详细迁移、权限、测试与正式账号暂停点见 [4B-1 说明](docs/SUPABASE-4B1.md)。
 
-`node scripts/verify-household-auth.mjs` 是明确授权的临时 Auth / Bootstrap 验证工具，限定同一专用项目，精确清理本轮临时 UUID。正式账号禁止用于自动化破坏性测试。四张真实渲染截图和 QA 结果见 [QA 记录](docs/QA.md)。当前停在用户手动创建正式家庭账号之前，不进入 4B-2。
+`node scripts/verify-household-auth.mjs` 是明确授权的临时 Auth / Bootstrap 验证工具，限定同一专用项目，精确清理本轮临时 UUID。正式账号禁止用于自动化破坏性测试。四张真实渲染截图和正式初始化 QA 结果见 [QA 记录](docs/QA.md)。4B-1 正式验收完成，正式数据保留；Books 和 Storage 文件仍为 0，不进入 4B-2。

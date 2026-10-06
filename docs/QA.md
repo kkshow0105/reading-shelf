@@ -193,3 +193,15 @@ Storage实测：通过Storage API初始化private book-covers，10MiB及三种MI
 qa/4b1-login-390x844.jpg、qa/4b1-login-1366x768.jpg、qa/4b1-bootstrap-390x844.jpg、qa/4b1-bootstrap-1366x768.jpg。
 
 浏览器临时账号及其Household / Profiles已精确清理，SQL再次核实Auth用户、Household、membership、Profile、Book、Storage对象总数均0。正式家庭账号尚未创建，正式登录 / Household / 两个Profile姓名尚待用户本人完成，不将临时测试说成正式验收。当前正式入口只做真实档案准备状态；第三阶段书籍mock原样保存在PrototypeApp，不挂载、不绑定真实UUID，不上传。没有新增依赖，没有进入4B-2。
+
+## 4B-1 正式家庭初始化验收（2026-10-06）
+
+用户回复正式账号已创建后，先只读确认唯一项目 ref 和 disable_signup=true、external.email=true。Auth 用户为1、邮箱已确认，初始化前业务表 / Storage均0；migration history完整包含20261005000100、20261005000200、20261006000100、20261006000200。
+
+真实本机登录页已交给用户本人；用户输入邮箱密码并填写书房和两个档案姓名，回复“登录和初始化已完成”。模型没有获取正式密码，没有读取登录字段、SDK token或浏览器session存储，没有把正式邮箱或密码写入文件、日志或Git。
+
+SQL只读确认正式数据：1 Auth用户、1 Household、1 owner membership（确实关联该Auth用户和Household）、2未归档Profiles、0 Books、0 Storage objects。两个Profile名称与真实页面一致，sort_order分别0 / 1；正式姓名不写入Git文档。
+
+浏览器在真实Profiles页显示“进入谁的书房？”和两个服务器档案姓名，没有mock统计 / 最近封面。仅做非破坏性选择一个正式档案，Header显示对应姓名；刷新后会话和档案选择正常恢复，再返回所有书房并保留正式登录。字体loaded，当前默认视口无横向溢出。截图qa/4b1-formal-profiles.jpg为真实页面，被忽略且不入Git。
+
+本次仅追加正式验收文档，没有代码 / 样式 / migration / 依赖变更，因此沿用已通过的26项unit tests、production build、临时账号安全矩阵和四张指定尺寸截图，不重复运行破坏性或无关测试。没有再次初始化，没有写入Books / Storage，没有清理正式数据，没有进入4B-2。真机、200%文字放大和屏幕阅读器等此前限制不变。

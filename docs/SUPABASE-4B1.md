@@ -4,7 +4,7 @@
 
 ## 当前状态与边界
 
-公开注册由用户手动关闭，Auth settings API 复查 disable_signup=true、external.email=true。正式入口仅 Email + Password 登录，无 signUp / OAuth / Magic Link / 邀请。当前代码、migration、临时账号验证已完成；**正式家庭账号尚未创建，停在用户手动创建账号之前**。不得把本文件的临时验证结果当作正式家庭验收。
+公开注册由用户手动关闭，Auth settings API 复查 disable_signup=true、external.email=true。正式入口仅 Email + Password 登录，无 signUp / OAuth / Magic Link / 邀请。代码、migration、临时账号验证已完成；**用户已本人创建正式账号、登录和首次初始化，正式验收通过**。临时安全测试与正式数据验收分别记录，正式账号不用于破坏性测试。
 
 第三阶段书籍原型从旧 App 原样保留到 src/PrototypeApp.tsx（仅组件名称变更），不在正式入口挂载，也不提供绕过登录的开发后门。mock.ts、ShelfPage、DetailPage、BookFormPage、封面组件和书籍规则不变。真实 Profiles 选择后停在准备完成状态，统计 / 最近封面不显示；4B-2 才接 Books。不新增依赖，不做 PWA / IndexedDB / 导出。
 
@@ -38,6 +38,12 @@ node scripts/verify-household-auth.mjs 使用随机虚构、自动确认的临�
 
 浏览器 QA 使用 scripts/household-ui-fixture.mjs 的临时账号，通过一次性 loopback 内存管道交给 QA 控制器，不写密码 / 邮箱 / token 文件或日志；不是应用接口，不在浏览器应用中导入。QA 后明确 cleanup，只清理对应 ledger 的临时 UUID。四张截图在 ignored qa/，不入 Git。
 
-## 下一步由用户完成
+## 正式账号与首次初始化验收
 
-请在该项目 Dashboard 手动创建正式家庭 Auth 用户，Email / Password 仅由本人输入保存；完成后只回复“正式账号已创建”。随后本人在本机登录页登录，填写书房名称和两个姓名。本次正式验收需再核实：1 Household、1 owner membership、2 Profiles（名称与输入一致）、0 Books、0 Storage files，正式数据永久保留。不得自行进入 4B-2。
+用户在 Dashboard 本人创建正式家庭 Auth 用户，并在真实本机登录页输入邮箱和密码；模型未获取正式密码，也未写入文件或日志。初始只读检查：1 个 Auth 用户且邮箱已确认，Household / membership / Profiles / Books / Storage 全部为 0。用户随后本人填写书房名称和两个姓名，回复“登录和初始化已完成”。
+
+只读 SQL 正式验收：Auth 用户 1、Household 1、membership 1（owner）、未归档 Profiles 2、Books 0、Storage objects 0；owner 正确关联真实 Auth 用户与该家庭。档案页真实姓名与数据库返回一致、sort_order 为 0 / 1。此文档不保存正式邮箱、密码、token、用户 UUID 或姓名。
+
+浏览器正式验收：进入真实 Profiles 页；非破坏性选择一个正式档案后 Header 使用服务器姓名，刷新仍保留登录与选择；最后返回“进入谁的书房？”并保持正式登录。没有再次调用 bootstrap，没有删除正式数据，没有测试性 Book / Storage 写入。验收截图 qa/4b1-formal-profiles.jpg 被忽略，不入 Git。
+
+4B-1 完成并停止，正式家庭数据永久保留。4B-2 尚未获准，不自行接入 Books / 封面 / 离线同步。
