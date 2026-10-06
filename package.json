@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --experimental-strip-types --test src/lib/books.test.ts src/data/remote/foundation.test.ts src/data/auth/auth.test.ts"
+    "test": "node --experimental-strip-types --test src/lib/books.test.ts src/data/remote/foundation.test.ts src/data/auth/auth.test.ts src/data/books/books.test.ts"
   },
   "dependencies": {
     "react": "19.3.0",

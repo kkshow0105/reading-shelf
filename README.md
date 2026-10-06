@@ -1,8 +1,8 @@
 # 私人书架 / Reading Shelf
 
-第三阶段书籍视觉已冻结；4A.5 数据基础和 4B-1 登录 / 家庭初始化已部署。当前入口使用真实 Supabase Auth、Household、Profiles；正式家庭账号由用户手动创建并本人完成首次登录和初始化，已验收 1 个书房、1 个 owner membership、2 个档案。**尚未接入真实 Books 或封面，选中档案后停在准备完成状态。**
+第三阶段书籍视觉已冻结；4A.5 数据基础和 4B-1 登录 / 家庭初始化已部署。4B-2 正式入口已接入真实 Supabase Auth、Household、Profiles 和 Books，提供列表、详情、添加、编辑、软删除与撤销，已通过正式人工验收与全部自动测试。指定尺寸 QA 接口仍超时，限制明确记录，未修改代码规避。封面选择暂时禁用，未进入 4B-3。
 
-第三阶段规范与书籍原型继续保留；Supabase Auth / 家庭与档案基础已按用户授权接入。真实书籍、封面 UI、PWA 与完整备份仍是后续目标。
+第三阶段规范与独立历史原型继续保留，正式入口不导入 mock；封面 Storage、PWA、离线与完整备份仍是后续目标。
 
 ## 运行与检查
 
@@ -35,6 +35,8 @@ React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、Tailwind CSS 4.3.3、lucide-react
 | src/lib/books.ts | 搜索、日期语义、筛选、排序与表单校验的纯函数 |
 | src/App.tsx | 登录保护、首次书房初始化、真实档案状态与 hash 导航 |
 | src/data/auth | 轻量 Auth Context、集中服务、错误 / 档案校验及测试 |
+| src/data/books | Profile 范围的 Books service、加载 hook、会话草稿、并发 / 请求保护与测试 |
+| src/components/BooksWorkspace.tsx | 真实书籍页面接入、保存 / 删除 / 撤销和冲突 / 草稿对话框 |
 | src/PrototypeApp.tsx | 第三阶段内存书籍原型原样保留，当前入口不挂载 |
 | src/styles.css | DESIGN.md 对应的统一语义 tokens、双主题、字体和响应式布局 |
 | public/covers | 12 张原创 SVG 测试封面，不是出版社封面 |
@@ -42,7 +44,7 @@ React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、Tailwind CSS 4.3.3、lucide-react
 | scripts | 封面生成与官方字体子集准备工具，均不在应用运行时执行 |
 | docs/QA.md | 实际浏览器 QA、修复与限制记录 |
 
-4B-2 才接书籍数据与保存 / 同步状态。Book / Profile 类型和第三阶段书籍页面保留，不能把旧内存“保存”误当作正式持久化。
+4B-2 保存须收到服务器成功响应；失败保留输入，不做离线保存。Book / Profile 类型和第三阶段书籍页面沿用，所有正式数据经 mapper / repository / service，不由页面直接处理 snake_case。
 
 ## 第三阶段原型交互（保留代码，当前不挂载）
 
@@ -77,7 +79,7 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 
 数据库备份不包含 Storage 原始文件，不能代替 App 完整备份。未来完整备份为 ZIP（manifest.json、结构化数据、covers/ 原图）；JSON 单独导出是结构化数据备份，CSV 只用于表格导出。本阶段只定义方案，没有实现导出。[Supabase 官方备份说明](https://supabase.com/docs/guides/platform/backups)
 
-第三阶段书籍原型不自动导入生产数据库，4B-1 不接 Books，不 push。
+第三阶段书籍原型不自动导入生产数据库。4B-2 没有新增 migration、放宽权限或 push。
 
 真实数据库类型为 `src/data/remote/database.types.ts`，通过 `node scripts/generate-database-types.mjs` 从已核验的真实 public schema 生成，禁止手工编辑。集中 client / repository / service 已使用该 Database 泛型。
 
@@ -90,3 +92,7 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 首次登录没有 membership 时，填写书房名称及两个姓名，通过新 bootstrap_household RPC 原子创建当前用户的 owner membership、Household 和 Profiles。档案页与 Header 使用真实姓名，隐藏尚未接入的书籍统计 / 最近封面。详细迁移、权限、测试与正式账号暂停点见 [4B-1 说明](docs/SUPABASE-4B1.md)。
 
 `node scripts/verify-household-auth.mjs` 是明确授权的临时 Auth / Bootstrap 验证工具，限定同一专用项目，精确清理本轮临时 UUID。正式账号禁止用于自动化破坏性测试。四张真实渲染截图和正式初始化 QA 结果见 [QA 记录](docs/QA.md)。4B-1 正式验收完成，正式数据保留；Books 和 Storage 文件仍为 0，不进入 4B-2。
+
+## 4B-2 真实书籍（正式验收完成）
+
+详见 [4B-2 实现与验收报告](docs/SUPABASE-4B2.md)。`node --experimental-strip-types scripts/verify-books-remote.mjs` 仅在明确授权的临时账号流程使用，限定同一 ref 并排除所有既有书房；检查 CRUD、CAS、软删除 / 撤销和 RLS 后精确清理，不用于修改用户正式书籍。用户本人录入的正式数据完整保留，封面 / 离线 / 备份仍未接入。

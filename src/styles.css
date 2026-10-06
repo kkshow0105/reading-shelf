@@ -396,6 +396,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .profile-entry-real { grid-template-columns: 1fr; }
 .logout-link { color: var(--text-secondary); font-size: 14px; padding-inline: 8px; }
 .selected-profile-back { margin-top: 32px; padding-left: 0; }
+.book-form button:disabled, .form-top-save:disabled, .dialog-actions button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 767px) {
   .access-page { display: block; padding-block: 40px 24px; min-height: calc(100dvh - 176px); }
   .access-intro h1 { font-size: 26px; margin-top: 16px; }

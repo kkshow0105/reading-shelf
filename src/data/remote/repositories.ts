@@ -42,14 +42,15 @@ export function createRepositories(client: SupabaseClient<Database>, householdId
         const books = (data || []).map(row => mapBook(row, householdId, profileId))
         return { books, nextOffset: books.length === limit ? offset + limit : null }
       },
-      async getBook(id: string, includeDeleted = false) {
+      async getBook(id: string, includeDeleted = false, profileId?: string) {
         let query = bookQuery().eq('id', uuid(id))
+        if (profileId) query = query.eq('profile_id', uuid(profileId))
         if (!includeDeleted) query = query.is('deleted_at', null)
         const { data, error } = await query.maybeSingle()
         checkApiError(error)
         return data ? mapBook(data, householdId) : null
       },
-      async createBook(profileId: string, draft: BookDraft, id = crypto.randomUUID()) {
+      async createBook(profileId: string, draft: BookDraft, id: string = crypto.randomUUID()) {
         uuid(profileId); uuid(id)
         if (draft.cover) throw new DataAccessError('cover_upload_required', '请先建立记录，再通过封面服务上传原图；不能把 blob 或 URL 保存为 Storage 路径。')
         const { data, error } = await client.from('books').insert({ id, household_id: householdId, profile_id: profileId, ...draftColumns(draft) }).select('*').single()

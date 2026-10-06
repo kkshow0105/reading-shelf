@@ -205,3 +205,29 @@ SQL只读确认正式数据：1 Auth用户、1 Household、1 owner membership（
 浏览器在真实Profiles页显示“进入谁的书房？”和两个服务器档案姓名，没有mock统计 / 最近封面。仅做非破坏性选择一个正式档案，Header显示对应姓名；刷新后会话和档案选择正常恢复，再返回所有书房并保留正式登录。字体loaded，当前默认视口无横向溢出。截图qa/4b1-formal-profiles.jpg为真实页面，被忽略且不入Git。
 
 本次仅追加正式验收文档，没有代码 / 样式 / migration / 依赖变更，因此沿用已通过的26项unit tests、production build、临时账号安全矩阵和四张指定尺寸截图，不重复运行破坏性或无关测试。没有再次初始化，没有写入Books / Storage，没有清理正式数据，没有进入4B-2。真机、200%文字放大和屏幕阅读器等此前限制不变。
+
+## 4B-2 自动实现与验收进度（2026-10-06）
+
+正式入口接入真实 Books，无 mock fallback。37/37 unit / repository tests 和 production build 通过。JS 627.97kB / gzip184.72kB，仍有既有 500kB 提醒；没有新增依赖或 migration，没有放宽 RLS。生产 JS 无旧 mock ID / 工厂标记，正式 App 不 import PrototypeApp。静态 secret literal 检查没有命中，.env.local 和 qa/ 已确认 ignored，管理员 secret 只在测试进程内存。
+
+真实远端临时账号 CRUD / CAS / undo / RLS 验证全部通过，含当前 Profile 显式过滤、软删除服务器排除、同标题两档案独立、NULL / date / crop 映射、稳定新建 UUID 恢复、双客户端冲突、数据库真实删除 actor、最新删除 revision 恢复、旧 undo conflict、跨家庭 / FK / anon / hard DELETE 拒绝。远端专项 fixtures 清理成功。
+
+实际浏览器使用另一 localhost 端口 5174 的临时 Auth，会话与用户正式 5173 隔离。已操作空 A / B、添加作者译者与仅完成日期、saving 禁用字段 / 按钮、真实详情、译者搜索、切换档案不串书、保留未保存草稿离开再恢复、另一设备修改后的冲突取消 / 主动重新载入、清除评分、再次编辑、删除确认 / 空架 / 撤销恢复。发现编辑成功后详情仍显示旧记录，已改用服务器写入响应并复测；初次列表被 mutation 打断时补读其他记录。草稿恢复提示只在真正重新进入恢复的表单显示。
+
+浏览器实测宽1280、高720、documentWidth1265、浅色、字体loaded，无横向滚动；没有捕获 error / warn 或敏感凭据日志。已保存实际首屏：qa/4b2-empty-1280x720.jpg、4b2-shelf-1280x720.jpg、4b2-add-1280x720.jpg、4b2-detail-1280x720.jpg、4b2-conflict-1280x720.jpg（ignored、不入Git）。
+
+**指定尺寸 QA 尚未完成**：浏览器 viewport 官方接口重复超时，页面实际尺寸未改变，不能把上述截图说成390×844或1366×768，也不能以旧 mock 截图代替。要求的八张截图、1920补查 / 文字放大 / 真机仍待完成。本轮 UI 离线 / auth-expiry 注入未实际执行；单元请求守卫和保存失败测试不等于完整浏览器故障测试。
+
+UI 临时 Auth / Household / Profiles / Books 已精确清理，两个 qa ledger 均不存在。清理排除运行前所有正式 Household，不删除用户数据。正式人工添加 / 编辑 / 档案隔离 / 删除撤销尚待用户本人完成，最终 commit 暂不创建。不 push，不进入4B-3。
+
+清理后只读 SQL 实测：Auth 1、Household 1、owner membership 1、未归档 Profile 2、Books 0、Storage objects 0。两个正式档案在真实 UI 均显示空书架，没有示例回退；最终留在首个档案供用户本人验收。该正式标签页实际619×672（非指定尺寸），截图 qa/4b2-formal-empty-actual.jpg。用户正式密码、token、浏览器 session 存储均未读取。
+
+## 4B-2 正式人工验收与最终收尾（2026-10-06）
+
+用户明确回复“正式 Books 验收完成”，确认本人完成正式添加 / 详情 / 编辑、档案隔离、删除 / 撤销流程。模型没有录入、编辑、删除或恢复正式记录，也没有读取正式密码；本轮只查询聚合数量。正式档案一正常记录1、软删除0；档案二正常记录0、软删除1。两条用户记录按其最终状态完整保留，不能因为第二档案书架为空就删除其历史或自动恢复。
+
+远端只读复核：Auth 1、Household 1、owner membership 1、未归档 Profile 2、Storage objects 0；两档案 cover_original_path 非空数都为0。没有进入4B-3，没有正式 Storage 上传、signed URL、替换、重试或 orphan cleanup。
+
+再次尝试指定尺寸：390×844与1366×768的官方 viewport 接口各20秒超时，reset也15秒超时。随后可用的DOM只读结果为619×672、documentWidth604、浅色、字体loaded。**两组指定尺寸 QA 未完成，八张截图未生成，不宣称通过**；用户已明确授权遇到相同工具限制时记录后收尾。不改业务代码或样式规避，不创建假截图，不把非指定尺寸截图重新命名冒充。
+
+最终 production build通过（TypeScript + Vite，JS627.97kB / gzip184.72kB，既有chunk提醒保留），全部37项unit / repository tests通过。再次运行真实远端临时账号Books / RLS / CAS / undo矩阵，全部通过并精确清理；正式数据保留。正式入口无mock依赖，依赖 / lockfile / migration / generated types / RLS无新增变更，Git diff和secret检查后独立提交，不amend、不push。

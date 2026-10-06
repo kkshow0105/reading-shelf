@@ -10,10 +10,11 @@ const admin = createClient(PROJECT_URL, adminKey, { auth: { persistSession: fals
 try {
   if (process.argv[2] === 'serve') {
     check(!existsSync(ledger), 'no unfinished UI fixture')
+    const excludedHouseholdIds = query('select id from public.households;').map(row => row.id)
     const email = `reading-shelf-ui-${randomUUID()}@example.invalid`, password = randomBytes(32).toString('base64url')
     const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true })
     check(!error && data.user?.id, 'disposable UI Auth user')
-    mkdirSync('qa', { recursive: true }); writeFileSync(ledger, JSON.stringify({ userId: data.user.id }))
+    mkdirSync('qa', { recursive: true }); writeFileSync(ledger, JSON.stringify({ userId: data.user.id, excludedHouseholdIds }))
     // One-use loopback pipe into the browser QA controller's MEMORY, never a log/file.
     // This is a disposable test account, never a formal household credential.
     const server = createServer((req, res) => {
@@ -25,13 +26,16 @@ try {
     setTimeout(() => server.close(), 60000).unref()
   } else if (process.argv[2] === 'cleanup') {
     check(existsSync(ledger), 'own UI ledger exists')
-    const { userId } = JSON.parse(readFileSync(ledger, 'utf8'))
+    const { userId, excludedHouseholdIds } = JSON.parse(readFileSync(ledger, 'utf8'))
+    check(Array.isArray(excludedHouseholdIds), 'UI fixture has formal household exclusion list')
     check(/^[0-9a-f-]{36}$/.test(userId), 'own disposable user ID')
     const memberships = query(`select household_id from public.household_members where user_id='${userId}';`)
     for (const { household_id: id } of memberships) {
       check(/^[0-9a-f-]{36}$/.test(id), 'own UI household ID')
-      check(query(`select count(*) n from public.books where household_id='${id}';`)[0].n === 0, 'UI fixture has no books')
-      query(`begin; delete from public.profiles where household_id='${id}'; delete from public.household_members where household_id='${id}'; delete from public.households where id='${id}'; commit;`)
+      check(!excludedHouseholdIds.includes(id), 'never clean a pre-existing household')
+      check(query(`select count(*) n from public.household_members where household_id='${id}' and user_id <> '${userId}';`)[0].n === 0, 'disposable household has no other users')
+      check(query(`select count(*) n from storage.objects where split_part(name,'/',1)='${id}';`)[0].n === 0, 'UI fixture has no Storage files')
+      query(`begin; delete from public.books where household_id='${id}'; delete from public.profiles where household_id='${id}'; delete from public.household_members where household_id='${id}'; delete from public.households where id='${id}'; commit;`)
       check(query(`select (select count(*) from public.households where id='${id}') + (select count(*) from public.profiles where household_id='${id}') + (select count(*) from public.household_members where household_id='${id}') n;`)[0].n === 0, 'UI household cleanup complete')
     }
     check(!(await admin.auth.admin.deleteUser(userId)).error, 'UI Auth cleanup')

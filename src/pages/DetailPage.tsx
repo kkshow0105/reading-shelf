@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, MoreHorizontal } from 'lucide-react'
 import type { Book, Profile } from '@/types'
 import { BookCover } from '@/components/BookCover'
@@ -7,8 +7,13 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { formatDate } from '@/lib/books'
-export function DetailPage({ profile, book, onNavigate, onDelete }: { profile: Profile; book: Book; onNavigate: (path: string) => void; onDelete: (book: Book) => void }) {
+import { BookConflictError, bookMessage } from '@/data/books/model'
+export function DetailPage({ profile, book, onNavigate, onDelete, onReload, preview = false }: { profile: Profile; book: Book; onNavigate: (path: string) => void; onDelete: (book: Book) => void | Promise<void>; onReload?: () => void; preview?: boolean }) {
   const [deleting, setDeleting] = useState(false)
+  const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null), [conflict, setConflict] = useState(false)
+  const gate = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   return <main id="main-content" className="detail-page page-shell page-enter" tabIndex={-1}>
     <div className="page-nav"><Button onClick={() => onNavigate(`/p/${profile.id}/shelf`)}><ArrowLeft size={18} aria-hidden="true" />返回书架</Button><Button onClick={() => onNavigate(`/p/${profile.id}/books/${book.id}/edit`)}>编辑</Button></div>
     <article className="book-detail"><BookCover title={book.title} author={book.author} cover={book.cover} className="detail-cover" presentation="detail" />
@@ -19,6 +24,10 @@ export function DetailPage({ profile, book, onNavigate, onDelete }: { profile: P
         <div className="detail-bottom"><span>来自{profile.name}的书架</span><DropdownMenu><DropdownMenuTrigger asChild><Button className="icon-button" aria-label="这本书的更多操作"><MoreHorizontal size={20} aria-hidden="true" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem className="danger-text" onSelect={() => setDeleting(true)}>移除这本书</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
       </div>
     </article>
-    <AlertDialog open={deleting} onOpenChange={setDeleting}><AlertDialogContent><AlertDialogTitle className="overlay-title">从{profile.name}的书架移除《{book.title}》？</AlertDialogTitle><AlertDialogDescription className="overlay-description">仅影响这一条示例记录，不会改变其他人的书架。可立即撤销，刷新后示例也会恢复。</AlertDialogDescription><div className="dialog-actions"><AlertDialogCancel>保留这本书</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(book)}>移除</AlertDialogAction></div></AlertDialogContent></AlertDialog>
+    <AlertDialog open={deleting} onOpenChange={open => { if (!busy) setDeleting(open) }}><AlertDialogContent><AlertDialogTitle className="overlay-title">从{profile.name}的书架移除《{book.title}》？</AlertDialogTitle><AlertDialogDescription className="overlay-description">{preview ? '仅影响这一条示例记录，可立即撤销。' : '仅移除这一条阅读记录，不影响其他档案，也不删除原始封面。移除后可立即撤销。'}</AlertDialogDescription>{error && <p className="field-error" role="alert">{error}</p>}<div className="dialog-actions"><AlertDialogCancel disabled={busy}>保留这本书</AlertDialogCancel>{conflict && <Button variant="outline" onClick={() => { setDeleting(false); onReload?.() }}>重新载入</Button>}<AlertDialogAction disabled={busy || conflict} onClick={async event => {
+      event.preventDefault(); if (gate.current) return; gate.current = true; setBusy(true); setError(null)
+      try { await onDelete(book); if (mounted.current) setDeleting(false) } catch (reason) { if (mounted.current) { setError(bookMessage(reason, 'delete')); setConflict(reason instanceof BookConflictError) } }
+      finally { gate.current = false; if (mounted.current) setBusy(false) }
+    }}>{busy ? '正在移除…' : '移除'}</AlertDialogAction></div></AlertDialogContent></AlertDialog>
   </main>
 }
