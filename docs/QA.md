@@ -231,3 +231,40 @@ UI 临时 Auth / Household / Profiles / Books 已精确清理，两个 qa ledger
 再次尝试指定尺寸：390×844与1366×768的官方 viewport 接口各20秒超时，reset也15秒超时。随后可用的DOM只读结果为619×672、documentWidth604、浅色、字体loaded。**两组指定尺寸 QA 未完成，八张截图未生成，不宣称通过**；用户已明确授权遇到相同工具限制时记录后收尾。不改业务代码或样式规避，不创建假截图，不把非指定尺寸截图重新命名冒充。
 
 最终 production build通过（TypeScript + Vite，JS627.97kB / gzip184.72kB，既有chunk提醒保留），全部37项unit / repository tests通过。再次运行真实远端临时账号Books / RLS / CAS / undo矩阵，全部通过并精确清理；正式数据保留。正式入口无mock依赖，依赖 / lockfile / migration / generated types / RLS无新增变更，Git diff和secret检查后独立提交，不amend、不push。
+
+## 4B-3 自动原图与显示验收（2026-10-06）
+
+从a0a6b8d干净基线开始，核实唯一ref及private book-covers：10MiB、JPEG/PNG/WebP，正式Book正常1 / 软删除1、Storage0。没有改正式记录或恢复已有软删除记录。沿用frontend-design / ui-ux-pro-max审查，保持既有文学风格、tokens与手机 / PC规则。
+
+46/46 unit / repository tests通过。真实远端临时账号上传三种格式，下载SHA256与原字节一致，path / 原始filename / center / private signed读取正确；outside sign/download/insert与public URL、duplicate / overwrite均拒绝；非图片 / SVG / 超10MiB拒绝；替换旧图字节不变，上传后旧revision冲突留下orphan且不覆盖；软删 / 恢复原图可读，移除只清空引用；新建封面拒绝保留Book。该专项Auth / Household / Profiles / Books / Storage fixtures已精确清理。
+
+实际UI用另一端口5174的临时账号隔离正式5173。原始JPEG400×600、PNG900×400、WebP300×900，均从真实表单保存并从private Storage显示。伪JPEG实际Image.decode失败、SVG / 超10MiB拒绝，旧图和表单未损坏；选择仅本机预览，取消不上传。连续新增第二本发现已完成create UUID未退役导致误报conflict，已修正并连续三本复测，原记录没有覆盖。既有编辑 / 重新选择、换图+文字同时保存、刷新、冲突取消保留File / 输入、主动重新载入、删除 / undo、跨档案空架隔离均实际操作。
+
+单本缺失对象的签名失败实测：真实3条记录仍显示，2图正常、1个placeholder、无整页alert；测试原引用已恢复。详情和编辑contain完整原图；详情沿用原占位框预留区保持标题位置，不把显示框裁切写回原文件。没有自动压缩、转码、EXIF展示、cropper或orphan清理功能。
+
+本轮viewport接口已恢复：390×844四类页面实测documentWidth≤390、字体loaded、默认三列3个106×159 / gap16 / cover；两列切换正常并回三列。1366×768四类页面无横向溢出，六列、封面180×270、保存按钮底部约136.67px在首屏；1920×1080书架七列无横向溢出。八张实际浅色截图已逐张查看，并确认JPEG尺寸，没有残留弹窗 / 调试面板或焦点遮挡，只截首屏：
+
+| 页面 | 390×844 | 1366×768 |
+|---|---|---|
+| 真实封面书架 | qa/4b3-shelf-390x844.jpg | qa/4b3-shelf-1366x768.jpg |
+| 添加页本地预览 | qa/4b3-add-390x844.jpg | qa/4b3-add-1366x768.jpg |
+| 真实封面详情 | qa/4b3-detail-390x844.jpg | qa/4b3-detail-1366x768.jpg |
+| 现有封面编辑 | qa/4b3-edit-390x844.jpg | qa/4b3-edit-1366x768.jpg |
+
+额外回退 / 宽图 / 默认视口证据也在ignored qa/，不入Git。签名URL未输出，截图不包含token。键盘返回→Tab到保存正确；五次Ctrl+=未改变宽度 / DPR，**200%放大未完成**。真机、读屏、手机键盘遮挡未实测。缓存近到期 / 去重 / 清理用可控时钟测试，未等一小时；浏览器网络中断 / partial success未强行注入，用service与integration测试，不冒充UI故障测试。
+
+最终build通过：JS634.87kB / gzip187.27kB，既有chunk提醒保留，未新增依赖或migration。正式人工封面验收及最终提交待用户本人完成，不进入PWA / Offline / Backup。
+
+最后在临时UI退出登录，实际回到login且封面img数量0；捕获error / warn各0，未检测到敏感token日志。UI临时Storage原件、历史图 / orphan、Book / Profile / Household / Auth均已按本轮UUID和路径精确清理，两个当前测试ledger不存在。运行入口43个本地模块无mock依赖，仅两项公开VITE配置，无运行时Storage.remove，diff与secret literal扫描通过，qa及.env.local未跟踪。正式数据只做聚合复核，用户图片由本人选择；模型不代选、不读取正式密码，正式人工验收通过前不提交。
+
+## 4B-3 正式封面人工验收与收尾（2026-10-06）
+
+用户本人回复“正式封面验收完成”，确认指定正式流程完成。模型不代选图片、不读取正式密码，不重复编辑 / 删除 / 恢复正式数据；只读核对记录数、cover引用、Storage对象元数据。
+
+正式Auth 1、Household 1、owner membership 1、Profiles 2；档案一正常Book 1 / cover引用1 / Storage对象3；档案二正常Book0 / 软删除1 / cover引用0 / Storage对象0。Storage合计3，当前引用1，未引用保留原件2。替换生成新路径，旧图不覆盖不删除，因此对象数增加属预期；不凭数量区分历史图 / orphan，也不自动清理。全部正式图片保留。
+
+最终production build及全部46项unit / repository tests通过，既有634.87kB chunk提醒保留。真实Storage / RLS / 集成矩阵再次使用独立临时账号，排除正式书房，最终精确清理；前后正式Book及Storage元数据指纹用于只读对比。正式人工验收与自动测试结果分开记录，八张指定尺寸截图已在前节，不无意义重拍。
+
+收尾远端首次复跑在替换阶段失败，原始异常未保留以避免输出签名URL/token，原因无法确定；当轮清理成功。脚本补充固定断言 / 安全类别诊断（没有业务或权限改动）后，全套复测通过并精确清理；不隐藏首次失败，不擅自归因为网络。
+
+最终正式Book版本 / 删除状态 / cover引用、Storage对象创建/更新时间及metadata指纹与收尾开始时完全相同，三张正式原件原样保留。最终Auth1 / Household1 / membership1 / Profiles2 / 正常Book1 / 软删除Book1 / Storage3；临时Auth0，新测试ledger不存在。旧4A.5 ledger标记cleaned，逐项UUID复查Auth / Household / Profile / Book / membership / Storage残留各0。diff / secret检查后独立正式提交，不amend、不push，不进入后续阶段。

@@ -1,8 +1,8 @@
 # 私人书架 / Reading Shelf
 
-第三阶段书籍视觉已冻结；4A.5 数据基础和 4B-1 登录 / 家庭初始化已部署。4B-2 正式入口已接入真实 Supabase Auth、Household、Profiles 和 Books，提供列表、详情、添加、编辑、软删除与撤销，已通过正式人工验收与全部自动测试。指定尺寸 QA 接口仍超时，限制明确记录，未修改代码规避。封面选择暂时禁用，未进入 4B-3。
+第三阶段书籍视觉已冻结；4B-2真实Books、4B-3 private Storage封面均已通过正式人工验收。46项测试、真实远端Storage矩阵与390×844 / 1366×768实际截图验收通过。原始图片完整保留，替换不覆盖旧图，PWA / Offline / Backup尚未实现。
 
-第三阶段规范与独立历史原型继续保留，正式入口不导入 mock；封面 Storage、PWA、离线与完整备份仍是后续目标。
+第三阶段规范与独立历史原型继续保留，正式入口不导入mock；PWA、离线与完整备份仍是后续目标。
 
 ## 运行与检查
 
@@ -36,6 +36,7 @@ React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、Tailwind CSS 4.3.3、lucide-react
 | src/App.tsx | 登录保护、首次书房初始化、真实档案状态与 hash 导航 |
 | src/data/auth | 轻量 Auth Context、集中服务、错误 / 档案校验及测试 |
 | src/data/books | Profile 范围的 Books service、加载 hook、会话草稿、并发 / 请求保护与测试 |
+| src/data/covers | 原图校验、会话File预览、签名链接缓存 / hook、新建与编辑封面流程及测试 |
 | src/components/BooksWorkspace.tsx | 真实书籍页面接入、保存 / 删除 / 撤销和冲突 / 草稿对话框 |
 | src/PrototypeApp.tsx | 第三阶段内存书籍原型原样保留，当前入口不挂载 |
 | src/styles.css | DESIGN.md 对应的统一语义 tokens、双主题、字体和响应式布局 |
@@ -96,3 +97,13 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 ## 4B-2 真实书籍（正式验收完成）
 
 详见 [4B-2 实现与验收报告](docs/SUPABASE-4B2.md)。`node --experimental-strip-types scripts/verify-books-remote.mjs` 仅在明确授权的临时账号流程使用，限定同一 ref 并排除所有既有书房；检查 CRUD、CAS、软删除 / 撤销和 RLS 后精确清理，不用于修改用户正式书籍。用户本人录入的正式数据完整保留，封面 / 离线 / 备份仍未接入。
+
+## 4B-3 原始封面（正式人工验收完成）
+
+详见 [4B-3 实现与验证](docs/SUPABASE-4B3.md)。选择JPEG / PNG / WebP、最多10MiB，实际解码后本地预览，保存时上传原始字节。private bucket、每次全新UUID路径、upsert=false；编辑换图与文字用同一条件更新，不覆盖旧图。封面失败不回滚已经成功的新建阅读记录；旧图 / orphan / 软删除封面不自动清理。
+
+签名链接3600秒，仅认证书房内存缓存与去重，剩余2分钟刷新，退出清理；DB仅相对path和原文件metadata。实际八张手机 / PC首屏截图见[QA](docs/QA.md)，没有mock或假截图。Node远端验证使用 `node --experimental-strip-types scripts/verify-covers-remote.mjs`，需要ignored qa/cover-fixtures里的真实测试图片，只在明确授权的临时账号流程运行；精确清理自己的Storage / Book / Household / Auth，不触碰正式数据。
+
+本阶段不实现PWA、离线或备份。未来完整备份必须包含Storage原图，数据库备份和signed URL不能代替原件。
+
+用户已确认正式封面验收完成。正式Storage有3个对象、当前引用1个，另2个是当前未引用的保留原件；每次替换使用新路径、旧图不自动删除，因此对象数增加属于预期。用户数据不作为测试清理对象，收尾只读复核，完整结果见4B-3说明与QA。

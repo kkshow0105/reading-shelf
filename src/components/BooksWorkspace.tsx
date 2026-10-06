@@ -18,6 +18,16 @@ import { BookFormPage } from '../pages/BookFormPage'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
 import type { MobileShelfDensity } from './DisplayDensityMenu'
+import { createCoverService } from '../data/remote/cover-service'
+import { CoverUrlCache } from '../data/covers/url-cache'
+import type { CoverSource } from '../data/covers/url-cache'
+import { CoverDisplayContext } from '../data/covers/display'
+import { createBookCoverMutations } from '../data/covers/mutations'
+import type { CoverChoice } from '../data/covers/files'
+
+function coverSource(record: StoredBook | null): CoverSource | undefined {
+  return record?.originalCover ? { path: record.originalCover.path, scope: { householdId: record.householdId, profileId: record.book.profileId, bookId: record.book.id } } : undefined
+}
 
 interface ShelfView { query: string; filters: Filters; sort: SortOrder; scroll: number }
 interface Toast { message: string; action?: () => Promise<void>; actionLabel?: string; reload?: () => Promise<void> }
@@ -27,6 +37,11 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
   logout: () => Promise<void>; drafts: ReadingDrafts;
 }) {
   const profiles = household.profiles.map(item => item.profile)
+  const coverCache = useMemo(() => {
+    const covers = createCoverService(getSupabaseClient())
+    return new CoverUrlCache(source => covers.getCoverDisplayUrl(source.scope, source.path))
+  }, [userId, household.id])
+  useEffect(() => () => coverCache.clear(), [coverCache])
   const [path, setPath] = useState(() => {
     const requested = window.location.hash.slice(1)
     if (requested && !['/login', '/setup'].includes(requested)) return requested
@@ -107,7 +122,7 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
     if (target?.logout) { drafts.clearUser(userId); await exit() }
     else if (target?.path) navigate(target.path)
   }
-  return <>
+  return <CoverDisplayContext.Provider value={coverCache}><>
     <Header profiles={profiles} profile={active} shelf={route.page === 'shelf'} query={active ? views[active.id].query : ''} onQuery={query => { if (active) setViews(previous => ({ ...previous, [active.id]: { ...previous[active.id], query } })) }} theme={theme} onTheme={onTheme} onNavigate={navigate} onLogout={() => void exit()} logoutBusy={logoutBusy} />
     {route.page === 'profiles' ? <ProfilesPage profiles={profiles} onNavigate={navigate} /> : <ProfileBooks key={`${household.id}:${route.profileId}`} userId={userId} householdId={household.id} profile={active!} route={route} view={views[route.profileId]} density={density} onDensity={setDensity} onView={changes => setViews(previous => ({ ...previous, [route.profileId]: { ...previous[route.profileId], ...changes } }))} onNavigate={navigate} drafts={drafts} onDraft={value => { dirty.current = value }} mutate={mutate} busy={busy} onFailure={failure} notify={value => { if (live.current) setToast(value) }} />}
     <Dialog open={pending !== null} onOpenChange={open => { if (!open) setPending(null) }}><DialogContent onOpenAutoFocus={event => { event.preventDefault(); continueRef.current?.focus() }}><DialogTitle className="overlay-title">这几行，还没有保存。</DialogTitle><DialogDescription className="overlay-description">{pending?.logout ? '本次会话还有未保存草稿。继续编辑，或放弃这些草稿后退出；已经保存的书籍不会删除。' : '可以保留本次会话草稿再离开，也可以继续写。草稿没有保存到数据库，刷新后会丢失。'}</DialogDescription><div className="draft-dialog-actions"><Button ref={continueRef} variant="outline" onClick={() => setPending(null)}>继续编辑</Button><Button onClick={() => void leave(false)}>{pending?.logout ? '放弃草稿并退出' : '放弃草稿'}</Button>{!pending?.logout && <Button variant="primary" onClick={() => void leave(true)}>保留草稿并离开</Button>}</div></DialogContent></Dialog>
@@ -117,7 +132,7 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
         if (live.current) { failure(reason); setToast({ message: bookMessage(reason, 'restore'), actionLabel: reason instanceof BookConflictError ? '重新载入' : '重试', action: reason instanceof BookConflictError ? toast.reload : toast.action }) }
       } finally { undoGate.current = false; if (live.current) setUndoBusy(false) }
     }}>{undoBusy ? '正在恢复…' : toast.actionLabel}</Button>}<Button className="icon-button" disabled={undoBusy} aria-label="关闭提示" onClick={() => setToast(null)}><X size={16} aria-hidden="true" /></Button></div>}
-  </>
+  </></CoverDisplayContext.Provider>
 }
 
 function ProfileBooks({ userId, householdId, profile, route, view, density, onDensity, onView, onNavigate, drafts, onDraft, mutate, busy, onFailure, notify }: {
@@ -127,6 +142,7 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
   mutate: <T>(action: () => Promise<T>) => Promise<T | undefined>; busy: boolean; onFailure: (error: unknown) => void; notify: (toast: Toast | null) => void;
 }) {
   const service = useMemo(() => createBooksService(createRepositories(getSupabaseClient(), householdId).books, householdId, profile.id), [householdId, profile.id])
+  const coverMutations = useMemo(() => createBookCoverMutations(createRepositories(getSupabaseClient(), householdId).books, createCoverService(getSupabaseClient()), householdId, profile.id), [householdId, profile.id])
   const books = useBooks(service, onFailure)
   const live = useRef(false), requests = useRef(new RequestSequence())
   const [detail, setDetail] = useState<{ id: string; record: StoredBook | null; loading: boolean; error: string | null }>({ id: '', record: null, loading: true, error: null })
@@ -152,22 +168,33 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
   const baselineRef = useRef(baseline); baselineRef.current = baseline
   const draftKeyRef = useRef(draftKey); draftKeyRef.current = draftKey
   const createIdRef = useRef(createId); createIdRef.current = createId
-  const trackDraft = useCallback((draft: BookDraft | null) => {
+  const trackDraft = useCallback((draft: BookDraft | null, coverChoice: CoverChoice = { kind: 'keep' }) => {
     const key = draftKeyRef.current
     if (!draft) { drafts.delete(key); onDraft(null); return }
-    const value = { draft, baseline: baselineRef.current, createId: createIdRef.current }
+    const value = { draft, baseline: baselineRef.current, createId: createIdRef.current, coverChoice, notice: drafts.get(key)?.notice }
     drafts.set(key, value); onDraft({ key, value })
   }, [drafts])
-  const save = async (draft: BookDraft) => {
+  const save = async (draft: BookDraft, coverChoice: CoverChoice = { kind: 'keep' }) => {
     const origin = baseline
-    trackDraft(draft)
+    trackDraft(draft, coverChoice)
     try {
-      const result = await mutate(() => route.page === 'edit' && origin ? service.update(origin, draft) : service.create(draft, createId))
+      const result = await mutate(() => route.page === 'edit' && origin ? coverMutations.update(origin, draft, coverChoice) : coverMutations.create(draft, createId, coverChoice))
       if (!live.current || !result) return
       if (result.kind === 'conflict') { setConflict({ id: origin?.book.id || createId }); throw new BookConflictError() }
       books.accept(result.record)
       setDetail({ id: result.record.book.id, record: result.record, loading: false, error: null })
+      // Retain an ID only while its create is unconfirmed, never reuse it for the NEXT book.
+      if (route.page === 'new') delete createIds.current[draftKey]
       drafts.delete(draftKey); onDraft(null)
+      if (result.coverIssue) {
+        const notice = result.coverIssue === 'upload' ? '书籍已保存，但封面上传失败。当前预览尚未保存，可再次保存重试。' : '书籍已保存，但封面关联未完成。原始图片已保留，当前预览尚未保存。'
+        const editKey = drafts.key(userId, householdId, profile.id, result.record.book.id)
+        drafts.set(editKey, { draft: { ...draft, cover: '' }, baseline: result.record, createId, coverChoice, notice })
+        notify({ message: '书籍已保存，封面尚未保存。' })
+        onNavigate(`/p/${profile.id}/books/${result.record.book.id}/edit`)
+        if (result.coverIssue === 'conflict') setConflict({ id: result.record.book.id })
+        return
+      }
       notify({ message: '已保存到书房。' }); onNavigate(`/p/${profile.id}/books/${result.record.book.id}`)
     } catch (reason) { if (live.current) onFailure(reason); throw reason }
   }
@@ -193,11 +220,11 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
     } catch (reason) { if (live.current) onFailure(reason); throw reason }
   }
   let page
-  if (route.page === 'shelf') page = <ShelfPage profile={profile} books={books.records.map(item => item.book)} {...view} density={density} onDensityChange={onDensity} onQuery={query => onView({ query })} onFilters={filters => onView({ filters })} onSort={sort => onView({ sort })} onNavigate={onNavigate} loading={books.loading} error={books.error} onRetry={() => void books.reload()} />
+  if (route.page === 'shelf') page = <ShelfPage profile={profile} books={books.records.map(item => item.book)} coverSources={Object.fromEntries(books.records.filter(item => item.originalCover).map(item => [item.book.id, coverSource(item)!]))} {...view} density={density} onDensityChange={onDensity} onQuery={query => onView({ query })} onFilters={filters => onView({ filters })} onSort={sort => onView({ sort })} onNavigate={onNavigate} loading={books.loading} error={books.error} onRetry={() => void books.reload()} />
   else if (route.page !== 'new' && (detail.id !== bookId || detail.loading)) page = <main id="main-content" className="access-status page-shell" tabIndex={-1}><div className="quiet-loading" aria-hidden="true" /><p role="status">正在翻开这本书…</p></main>
   else if (route.page !== 'new' && (detail.error || !detail.record)) page = <main id="main-content" className="page-shell empty-state" tabIndex={-1}><h1>{detail.error ? '这本书暂时无法载入。' : '这本书暂时无法打开。'}</h1>{detail.error && <p role="alert">{detail.error}</p>}<div className="empty-actions"><Button onClick={() => onNavigate(`/p/${profile.id}/shelf`)}>返回书架</Button>{detail.error && <Button variant="outline" onClick={() => setDetailAttempt(value => value + 1)}>重试</Button>}</div></main>
-  else if (route.page === 'new' || route.page === 'edit') page = <BookFormPage key={`${draftKey}:${formVersion}`} profile={profile} book={route.page === 'edit' ? baseline!.book : undefined} recoveredDraft={recovered?.draft} ownBooks={books.records.map(item => item.book)} onNavigate={onNavigate} onSave={save} onDraftChange={trackDraft} onObjectURL={() => {}} coverEnabled={false} />
-  else page = <DetailPage key={detail.record!.updatedAt} profile={profile} book={detail.record!.book} onNavigate={onNavigate} onDelete={remove} onReload={() => setDetailAttempt(value => value + 1)} />
+  else if (route.page === 'new' || route.page === 'edit') page = <BookFormPage key={`${draftKey}:${formVersion}`} profile={profile} book={route.page === 'edit' ? baseline!.book : undefined} recoveredDraft={recovered?.draft} recoveredCover={recovered?.coverChoice} saveNotice={recovered?.notice} coverSource={coverSource(baseline)} remoteCovers ownBooks={books.records.map(item => item.book)} onNavigate={onNavigate} onSave={save} onDraftChange={trackDraft} onObjectURL={() => {}} coverEnabled />
+  else page = <DetailPage key={detail.record!.updatedAt} profile={profile} book={detail.record!.book} coverSource={coverSource(detail.record)} onNavigate={onNavigate} onDelete={remove} onReload={() => setDetailAttempt(value => value + 1)} />
   return <>{page}<Dialog open={conflict !== null} onOpenChange={open => { if (!open && !reloading) setConflict(null) }}><DialogContent><DialogTitle className="overlay-title">这本书已在另一台设备被修改。</DialogTitle><DialogDescription className="overlay-description">当前输入仍然保留。重新载入最新内容会放弃这次尚未保存的修改；也可以取消，继续保留输入。</DialogDescription>{conflict?.error && <p className="field-error" role="alert">{conflict.error}</p>}<div className="dialog-actions"><Button variant="outline" disabled={reloading} onClick={() => setConflict(null)}>取消</Button><Button variant="primary" disabled={reloading || busy} onClick={async () => {
     if (!conflict) return; setReloading(true)
     try {

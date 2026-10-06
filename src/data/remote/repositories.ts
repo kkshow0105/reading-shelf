@@ -60,6 +60,9 @@ export function createRepositories(client: SupabaseClient<Database>, householdId
       updateBook(id: string, profileId: string, previousUpdatedAt: string, draft: BookDraft) {
         return write(id, profileId, previousUpdatedAt, draftColumns(draft))
       },
+      updateBookWithCover(id: string, profileId: string, previousUpdatedAt: string, draft: BookDraft, cover: OriginalCover | null) {
+        return write(id, profileId, previousUpdatedAt, { ...draftColumns(draft), ...coverColumns(cover, { householdId, profileId, bookId: id }) })
+      },
       replaceCover(id: string, profileId: string, previousUpdatedAt: string, cover: OriginalCover | null) {
         return write(id, profileId, previousUpdatedAt, coverColumns(cover, { householdId, profileId, bookId: id }))
       },

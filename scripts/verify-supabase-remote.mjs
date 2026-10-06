@@ -157,7 +157,7 @@ try {
   state.objects.push(outsidePath); saveLedger()
   pass('storage_member_read_upload_and_forbidden_actions')
   const signed = await serviceA.getCoverDisplayUrl(scope, original.path)
-  check(signed.expiresIn === 300 && (await fetch(signed.url)).status === 200, 'short-lived signed URL works')
+  check(signed.expiresIn === 3600 && (await fetch(signed.url)).status === 200, 'short-lived signed URL works')
   const short = must(await a.storage.from('book-covers').createSignedUrl(original.path, 1), 'one-second signed URL')
   await new Promise(resolve => setTimeout(resolve, 2200))
   check((await fetch(short.signedUrl)).status !== 200, 'expired signed URL rejected')

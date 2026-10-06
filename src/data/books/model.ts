@@ -4,6 +4,7 @@ import { DataAccessError, draftColumns } from '../remote/contracts.ts'
 import type { createRepositories } from '../remote/repositories.ts'
 import { toDraft } from '../../lib/books.ts'
 import { errorCode } from '../auth/policies.ts'
+import type { CoverChoice } from '../covers/files.ts'
 
 export type BooksRepository = ReturnType<typeof createRepositories>['books']
 export class BookConflictError extends Error {
@@ -24,7 +25,7 @@ export class MutationGate {
     try { return await action() } finally { this.busy = false }
   }
 }
-export interface DraftEnvelope { draft: BookDraft; baseline: StoredBook | null; createId: string }
+export interface DraftEnvelope { draft: BookDraft; baseline: StoredBook | null; createId: string; coverChoice?: CoverChoice; notice?: string }
 // Session-memory only. Auth expiry hides drafts; only the SAME user/household can recover them.
 export class ReadingDrafts {
   private entries = new Map<string, DraftEnvelope>()

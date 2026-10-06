@@ -34,7 +34,10 @@ try {
       check(/^[0-9a-f-]{36}$/.test(id), 'own UI household ID')
       check(!excludedHouseholdIds.includes(id), 'never clean a pre-existing household')
       check(query(`select count(*) n from public.household_members where household_id='${id}' and user_id <> '${userId}';`)[0].n === 0, 'disposable household has no other users')
-      check(query(`select count(*) n from storage.objects where split_part(name,'/',1)='${id}';`)[0].n === 0, 'UI fixture has no Storage files')
+      const paths = query(`select name from storage.objects where bucket_id='book-covers' and split_part(name,'/',1)='${id}';`).map(row => row.name)
+      check(paths.every(path => path.startsWith(`${id}/`)), 'only own UI Storage paths')
+      if (paths.length) check(!(await admin.storage.from('book-covers').remove(paths)).error, 'own UI Storage API cleanup')
+      check(query(`select count(*) n from storage.objects where bucket_id='book-covers' and split_part(name,'/',1)='${id}';`)[0].n === 0, 'zero UI Storage remainder')
       query(`begin; delete from public.books where household_id='${id}'; delete from public.profiles where household_id='${id}'; delete from public.household_members where household_id='${id}'; delete from public.households where id='${id}'; commit;`)
       check(query(`select (select count(*) from public.households where id='${id}') + (select count(*) from public.profiles where household_id='${id}') + (select count(*) from public.household_members where household_id='${id}') n;`)[0].n === 0, 'UI household cleanup complete')
     }

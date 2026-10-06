@@ -128,6 +128,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .book-cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .book-cover[data-presentation="shelf"] img { object-fit: cover; object-position: center; }
 .book-cover-original { aspect-ratio: auto; }
+.book-cover-original[data-remote="true"] { aspect-ratio: var(--cover-ratio); display: grid; place-items: center; }
 .book-cover-original img { height: auto; max-height: 360px; object-fit: contain; }
 .book-entry:active .book-cover { transform: translateY(1px); }
 .cover-fallback { width: 100%; height: 100%; padding: 20px; background: var(--surface-muted); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 24px; overflow-wrap: anywhere; }
