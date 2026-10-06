@@ -1,10 +1,14 @@
 # 私人书架 / Reading Shelf
 
-第三阶段书籍视觉已冻结；4B-2真实Books、4B-3 private Storage封面均已通过正式人工验收。46项测试、真实远端Storage矩阵与390×844 / 1366×768实际截图验收通过。原始图片完整保留，替换不覆盖旧图，PWA / Offline / Backup尚未实现。
+第三阶段书籍视觉已冻结；4B-2真实Books、4B-3 private Storage封面均已通过正式人工验收。原始图片完整保留，替换不覆盖旧图。5A 完整ZIP、JSON / CSV与空书房恢复已实现及自动验证，三种正式下载均已通过用户人工验收；未执行正式恢复，PWA / Offline尚未实现。
 
-第三阶段规范与独立历史原型继续保留，正式入口不导入mock；PWA、离线与完整备份仍是后续目标。
+第三阶段规范与独立历史原型继续保留，正式入口不导入mock；PWA与离线仍是后续目标。
 
 ## 运行与检查
+
+5A：“切换阅读档案”菜单 / 手机 Sheet → 数据与备份。完整 ZIP 包括全部家庭原图与软删除历史；JSON 不含原图，CSV 只作表格。恢复只支持另一个空书房，当前正式书房不可恢复。使用 fflate 0.8.3（MIT，按需加载），没有 PWA / IndexedDB / 自动备份。格式、100 MiB边界、技术时间策略、同会话重试限制和灾难恢复流程见 [5A](docs/SUPABASE-5A.md)。
+
+真实隔离恢复测试（需要已授权的 CLI 登录，绝不在其他项目执行）：`node --experimental-strip-types scripts/verify-backup-remote.mjs`。脚本先核验唯一 project ref，使用临时 Auth / Household，导出及恢复用普通 SDK，最后精确清理自己的 UUID / Storage 路径，复核正式指纹。不要把用户下载文件放入仓库。
 
 需要 Node.js 22.12+（Supabase SDK 要求 Node 22+）。本机已经安装本项目依赖；在项目目录运行：
 
@@ -36,6 +40,7 @@ React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、Tailwind CSS 4.3.3、lucide-react
 | src/App.tsx | 登录保护、首次书房初始化、真实档案状态与 hash 导航 |
 | src/data/auth | 轻量 Auth Context、集中服务、错误 / 档案校验及测试 |
 | src/data/books | Profile 范围的 Books service、加载 hook、会话草稿、并发 / 请求保护与测试 |
+| src/data/backup | 家庭全量导出、版本化ZIP校验、CSV、空书房恢复、映射及会话重试 |
 | src/data/covers | 原图校验、会话File预览、签名链接缓存 / hook、新建与编辑封面流程及测试 |
 | src/components/BooksWorkspace.tsx | 真实书籍页面接入、保存 / 删除 / 撤销和冲突 / 草稿对话框 |
 | src/PrototypeApp.tsx | 第三阶段内存书籍原型原样保留，当前入口不挂载 |
@@ -78,7 +83,7 @@ shadcn 改编参考官方 [new-york-v4 registry](https://ui.shadcn.com/docs/comp
 
 `supabase/migrations/` 保存表、约束、索引、触发器及 RLS / Storage policies；`src/data/remote/` 包含映射、repository 和封面服务；`src/lib/supabase.ts` 是统一惰性 client，4B-1 Auth 服务显式使用它。`.env.example` 仅有占位符，真实值放入已忽略的 `.env.local`。管理员 secret 只在终端测试进程内存使用，绝不使用 VITE 前缀或提交。
 
-数据库备份不包含 Storage 原始文件，不能代替 App 完整备份。未来完整备份为 ZIP（manifest.json、结构化数据、covers/ 原图）；JSON 单独导出是结构化数据备份，CSV 只用于表格导出。本阶段只定义方案，没有实现导出。[Supabase 官方备份说明](https://supabase.com/docs/guides/platform/backups)
+数据库备份不包含 Storage 原始文件，不能代替 App 完整备份。未来完整备份为 ZIP（manifest.json、结构化数据、covers/ 原图）；JSON 单独导出是结构化数据备份，CSV 只用于表格导出。5A已实现三种导出与空书房恢复，具体范围和限制见[5A说明](docs/SUPABASE-5A.md)。[Supabase 官方备份说明](https://supabase.com/docs/guides/platform/backups)
 
 第三阶段书籍原型不自动导入生产数据库。4B-2 没有新增 migration、放宽权限或 push。
 

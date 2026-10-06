@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import type { BookDraft, Filters, Profile, Route, SortOrder, Theme } from '../types'
 import type { HouseholdAccess } from '../data/auth/service'
@@ -30,6 +30,7 @@ function coverSource(record: StoredBook | null): CoverSource | undefined {
 }
 
 interface ShelfView { query: string; filters: Filters; sort: SortOrder; scroll: number }
+const BackupPage = lazy(() => import('../pages/BackupPage'))
 interface Toast { message: string; action?: () => Promise<void>; actionLabel?: string; reload?: () => Promise<void> }
 type ProfileRoute = Exclude<Route, { page: 'profiles' }>
 export function BooksWorkspace({ userId, household, theme, onTheme, logout, drafts }: {
@@ -221,6 +222,7 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
   }
   let page
   if (route.page === 'shelf') page = <ShelfPage profile={profile} books={books.records.map(item => item.book)} coverSources={Object.fromEntries(books.records.filter(item => item.originalCover).map(item => [item.book.id, coverSource(item)!]))} {...view} density={density} onDensityChange={onDensity} onQuery={query => onView({ query })} onFilters={filters => onView({ filters })} onSort={sort => onView({ sort })} onNavigate={onNavigate} loading={books.loading} error={books.error} onRetry={() => void books.reload()} />
+  else if (route.page === 'backup') page = <Suspense fallback={<main id="main-content" className="access-status page-shell" tabIndex={-1}><p role="status">正在打开备份页…</p></main>}><BackupPage householdId={householdId} userId={userId} profileId={profile.id} onNavigate={onNavigate} mutate={mutate} /></Suspense>
   else if (route.page !== 'new' && (detail.id !== bookId || detail.loading)) page = <main id="main-content" className="access-status page-shell" tabIndex={-1}><div className="quiet-loading" aria-hidden="true" /><p role="status">正在翻开这本书…</p></main>
   else if (route.page !== 'new' && (detail.error || !detail.record)) page = <main id="main-content" className="page-shell empty-state" tabIndex={-1}><h1>{detail.error ? '这本书暂时无法载入。' : '这本书暂时无法打开。'}</h1>{detail.error && <p role="alert">{detail.error}</p>}<div className="empty-actions"><Button onClick={() => onNavigate(`/p/${profile.id}/shelf`)}>返回书架</Button>{detail.error && <Button variant="outline" onClick={() => setDetailAttempt(value => value + 1)}>重试</Button>}</div></main>
   else if (route.page === 'new' || route.page === 'edit') page = <BookFormPage key={`${draftKey}:${formVersion}`} profile={profile} book={route.page === 'edit' ? baseline!.book : undefined} recoveredDraft={recovered?.draft} recoveredCover={recovered?.coverChoice} saveNotice={recovered?.notice} coverSource={coverSource(baseline)} remoteCovers ownBooks={books.records.map(item => item.book)} onNavigate={onNavigate} onSave={save} onDraftChange={trackDraft} onObjectURL={() => {}} coverEnabled />

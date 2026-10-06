@@ -26,4 +26,4 @@ export type Route =
   | { page: 'profiles' }
   | { page: 'shelf'; profileId: string }
   | { page: 'detail' | 'edit'; profileId: string; bookId: string }
-  | { page: 'new'; profileId: string }
+  | { page: 'new' | 'backup'; profileId: string }

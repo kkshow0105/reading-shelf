@@ -42,6 +42,7 @@ export function parseBookRoute(path: string, profiles: Profile[]): Route {
   const parts = path.split('/').filter(Boolean)
   if (parts[0] !== 'p' || !profiles.some(p => p.id === parts[1])) return { page: 'profiles' }
   const profileId = parts[1]
+  if (parts.length === 3 && parts[2] === 'backup') return { page: 'backup', profileId }
   if (parts.length === 3 && parts[2] === 'new') return { page: 'new', profileId }
   if (parts[2] === 'books' && parts[3] && (parts.length === 4 || parts.length === 5 && parts[4] === 'edit'))
     return { page: parts[4] === 'edit' ? 'edit' : 'detail', profileId, bookId: parts[3] }

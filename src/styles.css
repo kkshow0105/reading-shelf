@@ -396,6 +396,33 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .quiet-loading { width: 160px; height: 24px; background: var(--surface-muted); margin-bottom: 24px; }
 .profile-entry-real { grid-template-columns: 1fr; }
 .logout-link { color: var(--text-secondary); font-size: 14px; padding-inline: 8px; }
+.backup-page { max-width: 1040px; padding-bottom: 64px; }
+.backup-restore input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.backup-heading { margin-block: 32px 24px; }
+.backup-heading h1 { font-family: var(--font-serif); font-size: 36px; margin-block: 12px; }
+.backup-heading p, .backup-scope, .backup-row p, .backup-note, .backup-report p { color: var(--text-secondary); line-height: 1.8; }
+.backup-scope { font-size: 14px; margin-bottom: 28px; max-width: 48em; }
+.backup-row { display: flex; gap: 28px; justify-content: space-between; align-items: center; padding-block: 26px; border-top: 1px solid var(--border); }
+.backup-row > div { min-width: 0; max-width: 42em; }
+.backup-row h2, .backup-report h2 { font-size: 20px; margin-bottom: 8px; font-weight: 500; }
+.backup-row h2 span { color: var(--text-secondary); font-size: 11px; letter-spacing: .12em; margin-left: 8px; }
+.backup-row p { font-size: 14px; }
+.backup-row > .button { flex-shrink: 0; }
+.backup-note { font-size: 13px; margin-block: 16px; }
+.backup-status { margin-top: 20px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.backup-report { border-top: 1px solid var(--border); margin-top: 32px; padding-top: 24px; overflow-wrap: anywhere; }
+.backup-dialog { max-height: calc(100dvh - 40px); overflow-y: auto; }
+.backup-filename { overflow-wrap: anywhere; }
+.backup-summary { margin-block: 24px; }
+.backup-summary > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding-block: 8px; border-bottom: 1px solid var(--border); }
+.backup-summary dt { color: var(--text-secondary); font-size: 14px; }
+.backup-summary dd { text-align: right; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .backup-heading { margin-top: 20px; }
+  .backup-heading h1 { font-size: 28px; }
+  .backup-row { align-items: flex-start; flex-direction: column; gap: 16px; padding-block: 24px; }
+  .backup-dialog .dialog-actions { display: flex; flex-wrap: wrap; }
+}
 .selected-profile-back { margin-top: 32px; padding-left: 0; }
 .book-form button:disabled, .form-top-save:disabled, .dialog-actions button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 767px) {

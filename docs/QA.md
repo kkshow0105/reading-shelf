@@ -268,3 +268,45 @@ UI 临时 Auth / Household / Profiles / Books 已精确清理，两个 qa ledger
 收尾远端首次复跑在替换阶段失败，原始异常未保留以避免输出签名URL/token，原因无法确定；当轮清理成功。脚本补充固定断言 / 安全类别诊断（没有业务或权限改动）后，全套复测通过并精确清理；不隐藏首次失败，不擅自归因为网络。
 
 最终正式Book版本 / 删除状态 / cover引用、Storage对象创建/更新时间及metadata指纹与收尾开始时完全相同，三张正式原件原样保留。最终Auth1 / Household1 / membership1 / Profiles2 / 正常Book1 / 软删除Book1 / Storage3；临时Auth0，新测试ledger不存在。旧4A.5 ledger标记cleaned，逐项UUID复查Auth / Household / Profile / Book / membership / Storage残留各0。diff / secret检查后独立正式提交，不amend、不push，不进入后续阶段。
+
+## 5A · 自动验证（正式人工验收前记录，2026-10-06）
+
+5A采用真实家庭全量查询、包含历史原件与软删除的完整ZIP、JSON结构化导出、带BOM及公式防护CSV。字段、formatVersion=1、SHA-256、内存边界、空书房与时间/actor策略见SUPABASE-5A.md。没有migration / RLS / bucket / 正式数据变更，只有fflate0.8.3一个新依赖。
+
+真实远端隔离矩阵：source两个profiles（含归档）、A3/B2共5Books、全部五状态、译者有/无、ratingNULL/5、日期、带换行和引号短评、非居中crop、软删除1、三格式当前原图3+历史1。导出manifest包含全部4对象，新空target恢复profiles2 / Books5 / softDeleted1 / 当前原图3；所有字段与crop / 归档对比一致，cover字节SHA-256一致，所有ID与路径重映射，历史1仍在ZIP不上传。跨家庭读取被RLS阻止。损坏JSON / cover / 缺cover / future版本 / 无manifest均在任何写入前拒绝。真实上传失败保留Book，恢复暂停后同页面重试，不重复记录或对象；成功后再次恢复禁止。
+
+远端脚本共三轮通过，最终一轮包括中断 / owner复核、预览档案版本锁、外部书房改名不覆盖。每轮临时数据精确清理，正式Books及Storage版本/路径/metadata指纹与开始值一致；正式三张原件保持。测试文件与截图仅ignored qa/，无正式下载文件入Git。
+
+| 实际浏览器检查 | 结果 |
+|---|---|
+| 390×844 数据与备份页 | 无横向滚动；文学排版、分隔线普通行、48px操作区；页面超过视口正常纵向滚动 |
+| 1366×768 数据与备份页 | 说明/操作并排，无横向滚动，主次操作清楚 |
+| 390×844 恢复摘要 | 宽350px，非空提示与禁用确认可见，长中文文件名换行，最大高度受限、可纵向滚动 |
+| 1366×768 恢复摘要 | 宽480px，范围/数量/恢复策略/取消与禁用确认完整可见 |
+| 1920×1080 | 页面无横向滚动；不修改原书架列数 |
+| 键盘 | 取消默认焦点；Tab跳过禁用确认；Escape取消后焦点回到选择ZIP按钮 |
+| 200%文字放大 | 五次Ctrl+=未实际改变DPR / 尺寸，工具未生效，未完成；需人工检查 |
+| 下载 | 临时ZIP触发后页面声明已发起下载，但download事件20秒超时，不能确认文件落盘；JSON / CSV也只确认发起，正式三文件必须人工验收 |
+| 真实图像解码 | 浏览器校验测试ZIP中的JPEG / PNG / WebP全部成功；没有把Node头校验冒充浏览器解码 |
+| frontend-design | 沿用纸色/字体/酒红主操作与安静文学页面，无Settings看板、无卡片统计或新视觉方向 |
+| ui-ux-pro-max | 明确范围、进度/停止、错误、重复点击保护、危险确认、焦点与触控；不伪称部分成功为完整恢复 |
+
+截图：qa/5a-mobile-backup.jpg、qa/5a-pc-backup.jpg、qa/5a-mobile-summary.jpg、qa/5a-pc-summary.jpg；额外qa/5a-mobile-long-filename.jpg。截图均为实际页面的浅色首屏，用户正式数据未用于自动恢复。字体loaded。真机/读屏/200%放大未完成。
+
+build通过：主JS637.07kB/gzip188.16kB（4B-3为634.87/187.27）；backup页32.07/gzip10.88；动态ZIP库12.37/gzip6.10；CSS36.90/gzip8.36。保留既有主chunk>500kB提示；移除无效的archive动态导入提示，无重构。最终全部66项unit / repository tests通过（原46项+20项备份测试）。diff --check通过，改动文件secret literal扫描0；正式入口51个本地模块无mock / Prototype导入、运行时Storage.remove调用0。
+
+本节记录自动验证时的状态：当时尚待用户本人正式ZIP / JSON / CSV下载验收，未创建最终提交。随后正式下载验收与收尾见下节。非空正式书房恢复始终禁止，不读取用户正式下载内容、不索要密码，不进入PWA / Offline。
+
+## 5A · 正式下载人工验收与最终收尾（2026-10-06）
+
+用户本人明确确认完整 ZIP 已下载并可正常打开、JSON 已下载并可正常打开、CSV 已下载且中文/列结构正常，未执行正式恢复。三种正式下载验收通过。自动 download 接口超时仍为真实工具限制，落盘可用性来自用户确认；不读取正式下载文件，不把未确认的正式摘要检查说成通过。
+
+本次只更新验收文档与完成 Git 收尾，不修改业务代码、UI或依赖，不重新创建临时账号，不重做远端恢复。Supabase操作仅官方CLI的SELECT；正式 Books / Profiles / Storage没有写入，旧原图不清理。5A既有实现、指定尺寸截图及三轮真实隔离恢复测试随独立提交保留；没有进入PWA / Offline。
+
+验收后重新执行production build及全部66项unit / repository tests，均通过；主JS637.07kB/gzip188.16、backup页32.07/gzip10.88、动态ZIP库12.37/gzip6.10，只有既有主chunk>500kB提醒。没有因为普通验证安装或更新依赖。
+
+只读核验唯一ref后，正式Auth1 / Household1 / membership1 / Profiles2 / 正常Books1 / 软删除Books1 / 当前封面引用1 / Storage3；临时测试Auth0、当前5A未完成ledger0。旧4A.5 ledger标记cleaned，其UUID关联的Auth / Household / membership / Profile / Books / Storage残留逐项均0。5A三轮测试的精确清理结果保持；不重新创建测试数据来验证清理。
+
+正式Books版本/删除状态/封面引用及Storage路径/创建更新时间/metadata的组合SHA-256仍为ddadc27ab712a0954cd0e4ffdb2215360c40cd5fa145dd9860693121017230d7，与5A开始及自动恢复清理后的基线完全相同。指纹是元数据/版本检查，未读取用户原图像素或正式下载ZIP；当前正式两本记录和三张原件完整保留，Profiles无写入。
+
+git diff --check通过，所有已跟踪文本及待提交新增文件的secret literal扫描0；没有备份ZIP / JSON / CSV、qa/、真实env或凭据被Git跟踪。现有五个已跟踪JSON为components.json、package.json、package-lock.json、tsconfig.json、public/fonts/SOURCE.json，均为配置/公开字体来源记录，不是备份。新增十个文件均是5A代码、测试、脚本与说明，无临时或无关改动。独立提交信息为feat: add complete backup and restore；不amend、不push，提交后以最终git status确认clean。
