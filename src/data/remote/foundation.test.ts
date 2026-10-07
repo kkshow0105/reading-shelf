@@ -72,6 +72,29 @@ function fixture(respond: (request: { url: URL; init: RequestInit; body: unknown
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 // Installed SDK's maybeSingle fetches arrays for all methods, including PATCH.
 const noRow = () => json([])
+test('进度 nullable integer：NULL/0/1/50/100 双向映射；越界/小数/未知值拒绝', () => {
+  for (const progressPercent of [null, 0, 1, 50, 100]) {
+    assert.equal(draftColumns({ ...draft, progressPercent }).progress_percent, progressPercent)
+    assert.equal(mapBook({ ...row, progress_percent: progressPercent }, householdId).book.progressPercent, progressPercent)
+  }
+  for (const progressPercent of [-1, 101, 1.5, NaN, undefined, '35']) {
+    assert.throws(() => draftColumns({ ...draft, progressPercent } as never))
+    assert.throws(() => mapBook({ ...row, progress_percent: progressPercent }, householdId))
+  }
+})
+test('INSERT/UPDATE发送进度且保持状态、CAS和安全列边界', async () => {
+  for (const progressPercent of [null, 0, 1, 50, 100]) {
+    const f = fixture(r => json(r.init.method === 'POST' ? { ...row, ...(r.body as object) } : [{ ...row, ...(r.body as object) }]))
+    const input = { ...draft, status: '在读' as const, finishedOn: '', progressPercent }
+    const created = await f.repos.books.createBook(profileId, input, bookId)
+    assert.equal(created.book.progressPercent, progressPercent); assert.equal(created.book.status, '在读')
+    const result = await f.repos.books.updateBook(bookId, profileId, timestamp, { ...input, status: '暂停' })
+    assert.equal(result.kind, 'saved')
+    if (result.kind === 'saved') { assert.equal(result.record.book.progressPercent, progressPercent); assert.equal(result.record.book.status, '暂停') }
+    for (const r of f.requests) { const b = r.body as Record<string, unknown>; assert.equal(b.progress_percent, progressPercent); assert.equal('deleted_by' in b, false); assert.equal('updated_at' in b, false) }
+    assert.equal(f.requests[1].url.searchParams.get('updated_at'), `eq.${timestamp}`)
+  }
+})
 test('listBooks 请求显式过滤 household/profile/软删除并分页', async () => {
   const f = fixture(() => json([row]))
   assert.equal((await f.repos.books.listBooks(profileId)).books.length, 1)

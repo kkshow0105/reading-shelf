@@ -214,3 +214,15 @@ CSV 为 UTF-8 的平面记录导出，不是完整备份；包含档案、书名
 ## Version B · 家庭历史输入建议（2026-10-07）
 
 Add/Edit进入时读取当前Household所有未软删除Books的title/author/translator轻量投影，必要时补分页；一次表单加载后本地匹配，不按输入字符请求，不持久缓存。译者排除空值，trim、去重；中文包含、拉丁忽略大小写，完全相同→前缀→包含，稳定排序最多8项。选择只修改当前字段、作为普通草稿修改，不合并Books、不建立bibliography、不覆盖其他字段/状态/封面。失败仍可手工输入。详情大图复用当前signed URL，仅内存显示，不上传、不改cropPosition。
+
+## 5C-1 · 阅读进度与备份兼容（正式验收通过）
+
+Book.progressPercent 映射 public.books.progress_percent：nullable integer，0～100。NULL 表示未记录，0 表示明确的 0%；现有记录新增字段为 NULL，不自动回填。状态与进度独立，100% 不自动读完；切换状态仅控制展示，不删除进度。新增 / 编辑在“在读 / 暂停”时显示原生滑杆、精确数字和“清除进度”；控件出现不会自动写 0。写入仍经既有服务器成功确认及并发保护。
+
+书架 / 详情的在读、暂停以细进度线和百分比为主，NULL 显示“—”；读完继续评分，想读 / 弃读沿用旧规则。评分数据不删除。最近阅读、其他排序及筛选均不依据进度改变。原图、2:3 / cover / cropPosition、自然详情 / 编辑完整原图规则不变。
+
+备份 v1 的书籍字段曾严格定义，故新 ZIP / JSON 明确升级 formatVersion 2，progressPercent 为数值或 NULL；本版接受 v1 / v2，v1 缺少的进度仅在校验后的内存转换为 NULL，不重写 ZIP、原始 JSON 或校验和。旧应用安全拒绝 v2，需更新后恢复。v2 恢复保持 NULL / 0 / 1～100，CSV“阅读进度”列为空或整数，不把 NULL 转成 0。正式非空书房继续禁止恢复，历史原图保留 ZIP，恢复仅当前引用原图。
+
+5C-1 migration 仅新增进度字段、CHECK 及 authenticated 必需列 INSERT / UPDATE；RLS 与硬删除禁令不变。自动检查不修改正式 Books / progress / Profiles / Household / Storage。旧导航进入Detail会销毁Shelf，返回重建全部BookCover并重播页面淡入，在iPhone造成明显逐张闪白；现同档案Detail期间keep-alive当前Shelf、返回复用原img DOM，测试两次返回的额外remount从240降至0。表单/备份/切换档案/退出释放，不保留所有页面；应用过的搜索、筛选、排序、密度和滚动沿用现有状态。非首屏继续lazy/async，没有图片字节缓存、thumbnail或SW Storage cache。
+
+2026-10-07用户本人确认正式iPhone主动更新后两次Shelf→Detail→Back封面保持显示、体验正常，无新导航/滚动/表单/档案切换问题；此前其他5C-1项目也已通过。桌面Chromium返回的11张图全部200 / disk cache / 0 B，iPhone没有Network级egress证据，不将视觉通过表述为iPhone已证明0 B。Thumbnail Recommendation保持B：书达到几十/上百本再评估。用户正式使用产生的记录、进度和历史原图均保留，正式非空书房不执行恢复。详见docs/BOOK-PERFORMANCE-5C1.md。

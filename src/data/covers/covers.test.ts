@@ -16,7 +16,7 @@ const bookId = '30000000-0000-0000-0000-000000000001', imageId = '40000000-0000-
 const scope = { householdId, profileId, bookId }, path = coverPath(scope, 'image/png', imageId)
 const oldRevision = '2026-10-06T10:00:00.123456+00:00'
 const row: Database['public']['Tables']['books']['Row'] = { id: bookId, household_id: householdId, profile_id: profileId,
-  title: '测试', author: '作者', translator: null, notes: null, status: 'want_to_read', rating: null,
+  title: '测试', author: '作者', translator: null, notes: null, status: 'want_to_read', progress_percent: null, rating: null,
   started_on: null, finished_on: null, cover_original_path: path, cover_original_filename: '旧.png', cover_mime_type: 'image/png',
   cover_position_x: .25, cover_position_y: .75, created_at: oldRevision, updated_at: oldRevision, deleted_at: null, deleted_by: null }
 const draft = { ...blankDraft(), title: '测试', author: '作者', note: '新的文字', cropPosition: { x: .25, y: .75 } }
@@ -117,4 +117,18 @@ test('签名失败可重试，清理身份缓存后旧请求不能填回；错�
   const old = cache.get({ scope, path }); cache.clear(); release(); await old
   const newer = cache.get({ scope, path }); assert.equal(requests, 2); release(); await newer
   assert.throws(() => cache.get({ path, scope: { ...scope, profileId: householdId } }))
+})
+test('同步peek只复用有效path，返回/重新挂载无额外签名；提前120秒失效，clear后不可读', async () => {
+  let now = 0, calls = 0
+  const cache = new CoverUrlCache(async () => { calls++; return { url: 'same-test-only-url', expiresIn: 3600 } }, () => now)
+  const source = { scope, path }
+  assert.equal(cache.peek(source), undefined)
+  const initial = await cache.get(source)
+  for (let visit = 0; visit < 3; visit++) { assert.equal(cache.peek(source), initial); assert.equal(await cache.get(source), initial) }
+  assert.equal(calls, 1)
+  now = 3479999; assert.equal(cache.peek(source), initial)
+  now = 3480000; assert.equal(cache.peek(source), undefined)
+  assert.throws(() => cache.peek({ scope: { ...scope, profileId: householdId }, path }))
+  await cache.get(source); assert.equal(calls, 2)
+  cache.clear(); assert.equal(cache.peek(source), undefined)
 })

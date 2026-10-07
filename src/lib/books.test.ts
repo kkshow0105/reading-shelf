@@ -4,6 +4,19 @@ import { selectBooks, emptyFilters, readingDate, blankDraft, validateDraft, toDr
 import { normalizeCropPosition } from './covers.ts'
 import type { Book } from '../types/index.ts'
 const book = (values: Partial<Book>): Book => ({ ...blankDraft(), id: 'a', profileId: 'one', title: '悉达多', author: '赫尔曼·黑塞', translator: '姜乙', createdAt: '2026-10-01T00:00:00Z', ...values })
+test('进度空值不同于0；状态变化不清除，100%不自动读完，排序不使用进度', () => {
+  assert.equal(blankDraft().progressPercent, null)
+  for (const progressPercent of [null, 0, 1, 50, 100]) {
+    const record = book({ status: '在读', progressPercent })
+    assert.equal(toDraft(record).progressPercent, progressPercent)
+    assert.equal(toDraft({ ...record, status: '读完' }).progressPercent, progressPercent)
+    assert.equal(validateDraft(record).progressPercent, undefined)
+    assert.equal(record.status, '在读')
+  }
+  for (const progressPercent of [-1, 101, 1.5]) assert.ok(validateDraft(book({ progressPercent })).progressPercent)
+  const items = [book({ id: 'b', status: '在读', progressPercent: 100 }), book({ id: 'a', status: '在读', progressPercent: 0 })]
+  assert.deepEqual(selectBooks(items, 'one', '', emptyFilters(), 'recent').map(b => b.id), ['a', 'b'])
+})
 test('同名记录不会跨档案搜索或改变输入列表', () => {
   const records = [book({ id: 'a', rating: 5 }), book({ id: 'b', profileId: 'two', rating: 3 })]
   assert.deepEqual(selectBooks(records, 'one', '姜乙', emptyFilters(), 'rating').map(b => b.id), ['a'])

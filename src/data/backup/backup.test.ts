@@ -3,25 +3,51 @@ import assert from 'node:assert/strict'
 import { zipSync, unzipSync } from 'fflate'
 import { crossCheck, jsonBytes, openArchive, packArchive, sha256 } from './archive.ts'
 import { csvCell, exportCsv, exportComplete } from './export.ts'
-import { safeArchivePath, validateStructured } from './validation.ts'
+import { safeArchivePath, validateStructured, bookDraft } from './validation.ts'
 import { inspectTarget, RestoreSession } from './restore.ts'
 import type { BackupRepository } from './repository.ts'
-import type { BackupManifestV1, StructuredBackupV1 } from './types.ts'
+import type { BackupManifest, StructuredBackup } from './types.ts'
 
 const hh = '11111111-1111-4111-8111-111111111111', pp = '22222222-2222-4222-8222-222222222222', bb = '33333333-3333-4333-8333-333333333333'
 const time = '2026-10-06T01:02:03.123456+00:00'
-function data(): StructuredBackupV1 { return { format: 'reading-shelf-structured-export', formatVersion: 1, createdAt: time, coverFilesIncluded: false,
+function data(): StructuredBackup { return { format: 'reading-shelf-structured-export', formatVersion: 2, createdAt: time, coverFilesIncluded: false,
   household: { id: hh, name: '测试书房', originalCreatedAt: time, originalUpdatedAt: time }, profiles: [{ id: pp, name: '测试甲', sortOrder: 0, archivedAt: null, originalCreatedAt: time, originalUpdatedAt: time }],
-  books: [{ id: bb, profileId: pp, title: '中文,"书名"', author: '作者', translator: '', status: 'finished', startedOn: null, finishedOn: '2026-09-28', rating: null, notes: '第一行\n第二行', cropPosition: { x: .25, y: .75 }, cover: null,
+  books: [{ id: bb, profileId: pp, title: '中文,"书名"', author: '作者', translator: '', status: 'finished', startedOn: null, finishedOn: '2026-09-28', rating: null, progressPercent: null, notes: '第一行\n第二行', cropPosition: { x: .25, y: .75 }, cover: null,
     originalCreatedAt: time, originalUpdatedAt: time, deletedAt: null, deletedByOriginal: null }] } }
 async function fixture() {
   const source = data(), content = jsonBytes(source), files = new Map([['data/structured-data.json', content]])
-  const manifest: BackupManifestV1 = { format: 'reading-shelf-backup', formatVersion: 1, createdAt: time, backupStartedAt: time, backupCompletedAt: time, source: 'supabase', household: { id: hh, name: source.household.name },
+  const manifest: BackupManifest = { format: 'reading-shelf-backup', formatVersion: 2, createdAt: time, backupStartedAt: time, backupCompletedAt: time, source: 'supabase', household: { id: hh, name: source.household.name },
     profileCount: 1, bookCount: 1, activeBookCount: 1, softDeletedBookCount: 0, coverFileCount: 0, referencedCoverFileCount: 0, historicalCoverFileCount: 0,
     backupIncludes: ['structuredData', 'covers', 'softDeletedRecords', 'historicalOriginals'], hashAlgorithm: 'SHA-256', restoreHistoricalCovers: 'keep-in-zip',
     files: [{ kind: 'data', path: 'data/structured-data.json', size: content.length, sha256: await sha256(content) }] }
   return { source, manifest, files, bytes: await packArchive(manifest, files) }
 }
+test('v1旧ZIP无progress仍可读取并恢复为NULL；原输入不修改，v2强制字段', async () => {
+  const f = await fixture(), legacy = structuredClone(f.source) as unknown as Record<string, unknown>
+  legacy.formatVersion = 1
+  for (const b of legacy.books as Record<string, unknown>[]) delete b.progressPercent
+  const bytes = jsonBytes(legacy), manifest = { ...f.manifest, formatVersion: 1 as const, files: [{ kind: 'data' as const, path: 'data/structured-data.json', size: bytes.length, sha256: await sha256(bytes) }] }
+  const opened = await openArchive(await packArchive(manifest, new Map([['data/structured-data.json', bytes]])))
+  assert.equal(opened.data.books[0].progressPercent, null)
+  assert.equal(bookDraft(opened.data.books[0]).progressPercent, null)
+  assert.equal('progressPercent' in (legacy.books as object[])[0], false)
+  assert.throws(() => validateStructured({ ...legacy, formatVersion: 2 }))
+})
+test('v2 ZIP/JSON/恢复草稿/CSV保留NULL/0/1/50/100且拒绝无效进度', async () => {
+  const f = await fixture()
+  for (const progressPercent of [null, 0, 1, 50, 100]) {
+    const source = data(); source.books[0].progressPercent = progressPercent
+    const content = jsonBytes(source), manifest = { ...f.manifest, files: [{ kind: 'data' as const, path: 'data/structured-data.json', size: content.length, sha256: await sha256(content) }] }
+    const opened = await openArchive(await packArchive(manifest, new Map([['data/structured-data.json', content]])))
+    assert.equal(opened.data.books[0].progressPercent, progressPercent)
+    assert.equal(bookDraft(opened.data.books[0]).progressPercent, progressPercent)
+    assert.equal(JSON.parse(new TextDecoder().decode(content)).books[0].progressPercent, progressPercent)
+    const csv = exportCsv(source); assert.ok(csv.includes('"阅读进度"'))
+    assert.ok(csv.includes(`,"${progressPercent ?? ''}","第一行`))
+  }
+  for (const progressPercent of [-1, 101, 1.5, '35', undefined]) assert.throws(() => validateStructured({ ...data(), books: [{ ...data().books[0], progressPercent }] }))
+  assert.throws(() => crossCheck({ ...f.manifest, formatVersion: 1 }, f.source))
+})
 test('真实 ZIP roundtrip 保留中文、换行、null、微秒原时间和非居中位置', async () => {
   const f = await fixture(), opened = await openArchive(f.bytes)
   assert.deepEqual(opened.data, f.source); assert.equal(opened.identity.length, 64)
@@ -35,7 +61,7 @@ for (const kind of ['json-damaged', 'json-hash', 'missing-data', 'future', 'miss
     if (kind === 'json-hash') input['data/structured-data.json'][50] ^= 1
     if (kind === 'missing-data') delete input['data/structured-data.json']
     if (kind === 'missing-manifest') delete input['manifest.json']
-    if (kind === 'future') input['manifest.json'] = jsonBytes({ ...f.manifest, formatVersion: 2 })
+    if (kind === 'future') input['manifest.json'] = jsonBytes({ ...f.manifest, formatVersion: 999 })
     if (kind === 'unexpected') input['unknown.txt'] = new Uint8Array([1])
     if (kind === 'traversal') input['../../evil'] = new Uint8Array([1])
     if (kind === 'windows-path') input['C:\\evil'] = new Uint8Array([1])

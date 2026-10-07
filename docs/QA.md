@@ -385,3 +385,61 @@ manifest/普通any图标/专用maskable/Apple180/MIME引用、17项静态precach
 正式真机验收来自用户确认；历史200%/Android/截图工具限制不伪称已补测。本轮没有阅读进度、封面性能优化、thumbnail、Offline、IndexedDB或Sync；完成后停止。
 
 最终预提交secret literal/session扫描覆盖124个源码/文档/配置/build文本，0命中；真实env、.vercel、qa及备份不入Git。diff --check通过（仅CSS换行规范提示），全部候选为已验收5B/Version B范围，未见无关/删除改动；原依赖版本未变。独立提交后以Git历史与最终回复确认hash及working tree clean。
+
+## 5C-1 自动 checkpoint（2026-10-07，待人工 / 未提交）
+
+审计与完整边界见 [BOOK-PERFORMANCE-5C1](BOOK-PERFORMANCE-5C1.md)。用户真实桌面 Network 返回 Shelf：11 Img 全部 200 / 0 B / disk cache，视觉闪白不等于再次完整图片 egress；iPhone 没有同等级数据，不能宣称 0 B。本次仅缓存同步初始化 / 保持同路径 URL、async decode；3600 秒 TTL、提前 120 秒、in-flight dedupe、lazy、原图和 SW 边界不变。
+
+| 检查 | 本轮结果 |
+|---|---|
+| build / TypeScript | 通过；仅既有 JS >500kB 提示 |
+| unit / service | 98/98，无失败 / 跳过，含 PWA 14 项 |
+| React 首次渲染集成 | effects 运行前已有 cached src；连续 Shelf / Detail 返回不出现 fallback，模拟签名 1 次；lazy / async 及各状态 NULL / 100 / 星级通过 |
+| 官方远端 migration / types | 唯一项目核实、先 dry-run 后部署 20261007000100；nullable 无 default、0～100 CHECK、列级 INSERT / UPDATE，RLS / DELETE 不扩；官方 CLI 类型生成 |
+| 临时真实 progress CRUD | NULL / 35 创建，67 / 0 / NULL / 1 / 50 / 100 更新；非法 -1 / 101 拒绝，跨家庭不可改，状态变更保留，硬 DELETE 禁止 |
+| 临时真实 v1 / v2 restore | v1 五本全 NULL；v2 NULL / 0 / 1 / 50 / 100 保留；原有损坏包 / partial failure / retry / RLS 通过；正式未恢复 |
+| 临时清理 / 正式指纹 | 所有测试 UUID / 路径精确清理，残留 0；正式 HH1 / Profiles2 / Books13 / Storage14，原字段完整指纹前后一致 f088344f…，新进度全部 NULL |
+| 390×844 实际组件 | 三列 / 2:3、单行省略、35 / 68 / NULL / 100 / finished 星级、详情 / 添加 / 编辑、48px range、数字 / 清除 / 明确 0 / 状态往返保留通过，无横向溢出 |
+| 1366×768 实际组件 | 六列 / 对齐、详情进度、新增空值 / 编辑 / 保存通过，无横向溢出 |
+| 1920×1080 实际组件 | 七列，无横向溢出 |
+| 原生 lazy 120 本本地 fixture | 120 DOM img 有 lazy / async；首次仅 21 张 resource / complete，滚动两屏后 36；local transfer 不代表 Supabase，签名 loader 仍 120 不冒充远端数据 |
+| 截图工具限制 | CSS viewport 确为指定大小，但 PNG 输出手机 375×812 / PC1351×760；不专门改业务样式适配工具 |
+| 尚未验收 | iPhone 往返闪白、进度触摸、正式保存重开；200% / VoiceOver；前端尚未同 origin 部署 |
+
+新增 migration 已部署但没有回填或正式 CRUD。所有浏览器表单操作为隔离本地合成记录，真实远端操作仅临时账号 / 书房，旧正式下载文件没有被读取。未新增依赖，未改 PWA 更新架构、Storage 原图、thumbnail、Offline / IndexedDB / Sync。Git 保留本轮修改等待本人验收；不提交 / amend / push。最终 secret / diff 与构建产物复核见本节后续记录。
+
+最终本地 build / TypeScript、98/98 tests 及 React 首次渲染集成再次通过。manifest 的 any / 专用 maskable PNG 尺寸和 Apple180 引用正确，SW 17 项 precache 仅静态壳 / 字体 / 图标，PWA策略源码无 diff。124 个候选及构建文本 secret literal / privileged JWT 扫描 0 命中，真实 env、qa、.vercel 和用户备份不入 Git；git diff --check 通过。当前 29 个 modified、5 个 untracked，无 staged / deleted，HEAD 仍 9107070；不声明 working tree clean。
+
+本轮临时 QA server 5178 已结束，临时标签关闭、viewport 覆写恢复；既有 5173 未停止。本地 fixture 热更新曾触发 createRoot / Fast Refresh 提示后自动整页重载，只发生在 ignored qa/ helper，未以业务代码规避；最终验证使用加载完成后的组件页面。没有生产部署或正式进度写入。
+
+## 5C-1 候选部署 / 待 iPhone（2026-10-07）
+
+后续用户已授权部署到既有 https://reading-shelf-ten.vercel.app/。Vercel reading-shelf production READY：dpl_H8245gpfmD1AHogHzioemZ4QNLS4。部署前 build / 98/98 tests、manifest图标 /17项静态缓存检查通过，142个候选及实际上传文本secret命中0。只上传审查的32个静态文件，保留旧hash资源；无源码/env/QA/备份/正式封面。稳定origin首页和全部资源200、字节一致，SW/manifest更新缓存头正确。
+
+正式数据仅只读核对：部署前后HH1/Profiles2/Books13/Storage14、原字段指纹f088344f…一致，progress非NULL为0。未执行或修改已部署migration，未重跑临时远端测试，未执行正式人工验收。PWA仍等待用户主动确认；未commit/push/amend，当前29 modified/5 untracked/0 staged。详细证据见BOOK-PERFORMANCE-5C1及ignored qa/5c1-deploy-*.json，暂停等待本人iPhone验收。
+
+## 5C-1 部分人工通过 / 封面返回修正（2026-10-07）
+
+本人确认除iPhone详情返回封面闪白外全部通过，暂不提交。先加DEV匿名生命周期诊断，真实BooksWorkspace+本地SDK合成fixture+现有WebKit26.5证明Shelf完全unmount、120个img两次全量重建；Shelf入场page-in从opacity0重播。BookCover没有isLoaded/opacity gate。依次只试auto解码、恢复async后试前6eager，均仍remount/淡入；恢复原全lazy/async后仅改当前Shelf↔Detail保留DOM与返回不播入场。
+
+修复诊断：ShelfPage/网格mounted1/unmounted0，Shelf BookCover120/0（原为360/240）；两次返回全部同节点、首6complete、opacity1、无animation，手机图片请求15→15/签名120→120。日志仅匿名类型/序号，代码已移除、证据在ignored qa/return-*.json，不进Git。没有真实URL/token/书名输出。
+
+最终390×844/1366×768/1920×1080现有WebKit真渲染通过，两次往返无新增本地图片请求、同img、无横向溢出；hidden/inert/current-main唯一、native Back滚动900恢复/焦点、edit释放、切换profile/所有书房释放、详情深链接不隐藏加载Shelf、滚动后lazy均通过。120本初次手机15/PC18/大PC35加载，不是120全部；数据/图仅fixture。1920定位参数问题只修QA选取可视书后重验一次，不改业务。Windows WebKit不等于iPhone，未宣称真机已通过或0B。
+
+build/TS、98/98 tests、React初次渲染/直接详情/隐藏菜单检查通过。progress、migration、backup、Storage、TTL、URLhook、SW源码/配置、依赖与本轮开始hash完全相同；无原图操作/thumbnail/preload/blob缓存。正式前后HH1/Profiles2/Books15/Storage16（本轮开始已为此数）与完整指纹efe1befc…一致，含用户验收后的progress。未远端写入/迁移/恢复；等待再次iPhone验收，不提交。
+
+按已有同origin候选发布授权部署封面修正：dpl_75QJnV7TRBX6bG16zGHc4rU2qSvD / READY，https://reading-shelf-ten.vercel.app/不变。34静态资源200且字节一致，SW/manifest交付正确、17静态缓存，原用户确认更新机制不变；无正式图片或数据上传。145文本secret扫描0；发布后正式完整指纹仍efe1befc…一致。git diff --check通过，30 modified/6 untracked/0 staged，未commit/push/amend。Windows WebKit结果只证明本地候选保留DOM/没有新增本地图片请求；最终iPhone闪白是否消失待本人确认，不伪称通过。
+
+## 5C-1 最终正式人工验收（2026-10-07）
+
+用户本人明确确认：iPhone主动更新最新候选，Shelf→Detail→Back连续两次通过，返回首屏封面持续显示、不再整片空白后逐张出现，体验正常；无新导航/滚动/表单/档案切换问题。此前其余5C-1验收全部通过，本阶段现已完整通过。不是用本地WebKit代替人工结果。
+
+根因记录：Detail销毁Shelf、返回全部BookCover重新mount、page-in淡入重播，在iPhone造成明显逐张闪白。修复为同档案Detail期间keep-alive当前Shelf，返回复用原img且不重播fade，实验两次返回额外remount240→0；非首屏保留lazy / async，无新图片网络缓存/thumbnail/SW Storage cache。DEV生命周期诊断代码与日志不进入提交。
+
+桌面真实Chromium11张封面200 / 0 B / disk cache证据保留；iPhone没有Network级egress明细，视觉通过不等于iPhone已证明0 B。Thumbnail Recommendation为B，达到几十/上百本时再评估。本轮正式收尾只运行已授权的隔离远端progress / v1-v2 backup兼容测试并精确清理自己的UUID/路径，不执行正式恢复或清理正式原图；最终自动结果补记于下。
+
+最终build/TypeScript、98/98 unit/service及React首次渲染集成通过，无失败/跳过；manifest/icons/Apple与17静态precache复核通过，PWA源码/缓存边界不改。保留既有JS>500kB和PWA closeBundle耗时提示，不改代码消除普通提示。
+
+remote progress完整CRUD/NULL/0/1/35/67/50/100、状态独立、非法值CHECK、跨家庭RLS/DELETE测试通过；remote backup v2五本NULL/0/1/50/100及v1五本全NULL恢复、原图SHA、历史保留、损坏/缺文件/未来版本、部分失败/重试/重复恢复/权限矩阵全部通过。每组测试只操作新临时账号/书房；精确UUID/路径清理后Auth/Household/Members/Profiles/Books/Storage为0，活动progress/backup账本无残留，测试邮件Auth聚合0。
+
+正式前后1HH/2Profiles/15Books/16Storage与完整指纹efe1befc7719215921692219241e7d149eb1b4c279b5e027390034626b2384f5相同，包含正式progress，不清空本人使用产生的数据，不读取正式下载文件，不执行正式恢复或重跑migration。本轮仅文档更新，业务源码与已验收候选hash相同。125个候选/build文本secret扫描0、diff --check通过，36候选均本阶段范围；测试ZIP/JSON/截图/env/.vercel均不跟踪。独立提交采用feat: add reading progress and improve cover loading，不amend/push，提交后核对clean再停止，不进入thumbnail/Offline/IndexedDB/Sync。

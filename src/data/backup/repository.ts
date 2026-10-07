@@ -4,7 +4,7 @@ import { checkApiError } from '../remote/repositories.ts'
 import { uuid } from '../remote/contracts.ts'
 import { COVER_BUCKET, assertCoverPath } from '../remote/cover-path.ts'
 import { BACKUP_LIMITS, BackupError } from './types.ts'
-import type { CoverMime, StructuredBackupV1 } from './types.ts'
+import type { CoverMime, StructuredBackup } from './types.ts'
 import { validateStructured } from './validation.ts'
 
 export type ProfileRow = Database['public']['Tables']['profiles']['Row']
@@ -62,14 +62,14 @@ export function createBackupRepository(client: SupabaseClient<Database>, househo
     return data
   }
   return { householdId, client, profiles, books, objects, household,
-    async snapshot(): Promise<StructuredBackupV1> {
+    async snapshot(): Promise<StructuredBackup> {
       const hh = await household(), pp = await profiles(), bb = await books()
       // Explicit allowlist: never serialize an SDK session, membership or signed URL.
-      return validateStructured({ format: 'reading-shelf-structured-export', formatVersion: 1, createdAt: new Date().toISOString(), coverFilesIncluded: false,
+      return validateStructured({ format: 'reading-shelf-structured-export', formatVersion: 2, createdAt: new Date().toISOString(), coverFilesIncluded: false,
         household: { id: hh.id, name: hh.name, originalCreatedAt: hh.created_at, originalUpdatedAt: hh.updated_at },
         profiles: pp.map(p => ({ id: p.id, name: p.name, sortOrder: p.sort_order, archivedAt: p.archived_at, originalCreatedAt: p.created_at, originalUpdatedAt: p.updated_at })),
         books: bb.map(b => ({ id: b.id, profileId: b.profile_id, title: b.title, author: b.author, translator: b.translator || '', status: b.status,
-          startedOn: b.started_on, finishedOn: b.finished_on, rating: b.rating, notes: b.notes || '', cropPosition: { x: b.cover_position_x, y: b.cover_position_y },
+          startedOn: b.started_on, finishedOn: b.finished_on, rating: b.rating, progressPercent: b.progress_percent, notes: b.notes || '', cropPosition: { x: b.cover_position_x, y: b.cover_position_y },
           cover: b.cover_original_path ? { originalPath: b.cover_original_path, originalFilename: b.cover_original_filename, mimeType: b.cover_mime_type } : null,
           originalCreatedAt: b.created_at, originalUpdatedAt: b.updated_at, deletedAt: b.deleted_at, deletedByOriginal: b.deleted_by })) })
     },

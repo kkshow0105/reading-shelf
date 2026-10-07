@@ -1,4 +1,4 @@
-import { record, text, uuid, revision, fromDatabaseStatus, assertPosition, assertRating } from './contracts.ts'
+import { record, text, uuid, revision, fromDatabaseStatus, assertPosition, assertRating, assertProgress } from './contracts.ts'
 import type { StoredBook, StoredProfile } from './contracts.ts'
 import { assertCoverPath, coverColumns } from './cover-path.ts'
 
@@ -12,11 +12,12 @@ export function mapBook(value: unknown, householdId: string, profileId?: string)
   if (originalCover) coverColumns(originalCover, { householdId: household, profileId: profile, bookId: id })
   const position = assertPosition({ x: row.cover_position_x as number, y: row.cover_position_y as number })
   assertRating(row.rating)
+  assertProgress(row.progress_percent)
   return { householdId: household, updatedAt: revision(text(row, 'updated_at')),
     deletedAt: text(row, 'deleted_at', true) || null, deletedBy: text(row, 'deleted_by', true) || null, originalCover,
     book: { id, profileId: profile, title: text(row, 'title'), author: text(row, 'author'),
       translator: text(row, 'translator', true), status: fromDatabaseStatus(row.status),
-      startedOn: text(row, 'started_on', true), finishedOn: text(row, 'finished_on', true), rating: row.rating,
+      startedOn: text(row, 'started_on', true), finishedOn: text(row, 'finished_on', true), rating: row.rating, progressPercent: row.progress_percent,
       note: text(row, 'notes', true), cover: '', cropPosition: position, createdAt: text(row, 'created_at') } }
 }
 export function mapProfile(value: unknown, householdId: string): StoredProfile {

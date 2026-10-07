@@ -1,6 +1,6 @@
 import { assertCoverPath, coverColumns } from '../remote/cover-path.ts'
 import { draftColumns, fromDatabaseStatus, revision, uuid } from '../remote/contracts.ts'
-import type { BackupBook, BackupManifestV1, StructuredBackupV1 } from './types.ts'
+import type { BackupBook, BackupManifest, StructuredBackup } from './types.ts'
 import { BACKUP_LIMITS, BackupError } from './types.ts'
 
 const fail = (): never => { throw new BackupError('备份结构不符合要求，无法恢复。') }
@@ -34,12 +34,12 @@ export function safeArchivePath(value: string) {
 }
 export function bookDraft(book: BackupBook) {
   return { title: book.title, author: book.author, translator: book.translator, status: fromDatabaseStatus(book.status),
-    startedOn: book.startedOn || '', finishedOn: book.finishedOn || '', rating: book.rating, note: book.notes, cover: '', cropPosition: { ...book.cropPosition } }
+    startedOn: book.startedOn || '', finishedOn: book.finishedOn || '', rating: book.rating, progressPercent: book.progressPercent, note: book.notes, cover: '', cropPosition: { ...book.cropPosition } }
 }
-export function validateStructured(value: unknown): StructuredBackupV1 {
-  const root = object(value)
+export function validateStructured(value: unknown): StructuredBackup {
+  const root = object(structuredClone(value))
   keys(root, 'format formatVersion createdAt coverFilesIncluded household profiles books')
-  if (root.format !== 'reading-shelf-structured-export' || root.formatVersion !== 1 || root.coverFilesIncluded !== false)
+  if (root.format !== 'reading-shelf-structured-export' || ![1, 2].includes(root.formatVersion as number) || root.coverFilesIncluded !== false)
     throw new BackupError('不支持这个备份格式或版本。')
   time(root.createdAt)
   const hh = object(root.household); keys(hh, 'id name originalCreatedAt originalUpdatedAt')
@@ -56,7 +56,8 @@ export function validateStructured(value: unknown): StructuredBackupV1 {
   const bookIds = new Set<string>()
   for (const value of array(root.books, BACKUP_LIMITS.books)) {
     const b = object(value)
-    keys(b, 'id profileId title author translator status startedOn finishedOn rating notes cropPosition cover originalCreatedAt originalUpdatedAt deletedAt deletedByOriginal')
+    keys(b, 'id profileId title author translator status startedOn finishedOn rating notes cropPosition cover originalCreatedAt originalUpdatedAt deletedAt deletedByOriginal' + (root.formatVersion === 2 ? ' progressPercent' : ''))
+    if (root.formatVersion === 1) b.progressPercent = null
     const bid = id(b.id), pid = id(b.profileId); if (bookIds.has(bid) || !profileIds.has(pid)) fail(); bookIds.add(bid)
     string(b.title, 200, 1); string(b.author, 200, 1); string(b.translator, 200); string(b.notes, 5000)
     for (const key of ['startedOn', 'finishedOn']) if (b[key] !== null) string(b[key], 10, 10)
@@ -72,12 +73,12 @@ export function validateStructured(value: unknown): StructuredBackupV1 {
       try { coverColumns({ path, filename, mimeType }, { householdId: hh.id as string, profileId: pid, bookId: bid }) } catch { fail() }
     }
   }
-  return root as unknown as StructuredBackupV1
+  return root as unknown as StructuredBackup
 }
-export function validateManifest(value: unknown): BackupManifestV1 {
+export function validateManifest(value: unknown): BackupManifest {
   const m = object(value)
   keys(m, 'format formatVersion createdAt backupStartedAt backupCompletedAt source household profileCount bookCount activeBookCount softDeletedBookCount coverFileCount referencedCoverFileCount historicalCoverFileCount backupIncludes hashAlgorithm restoreHistoricalCovers files')
-  if (m.format !== 'reading-shelf-backup' || m.formatVersion !== 1) throw new BackupError('不支持这个完整备份格式或版本。')
+  if (m.format !== 'reading-shelf-backup' || ![1, 2].includes(m.formatVersion as number)) throw new BackupError('不支持这个完整备份格式或版本。')
   if (m.source !== 'supabase' || m.hashAlgorithm !== 'SHA-256' || m.restoreHistoricalCovers !== 'keep-in-zip'
     || JSON.stringify(m.backupIncludes) !== JSON.stringify(['structuredData', 'covers', 'softDeletedRecords', 'historicalOriginals'])) fail()
   for (const key of ['createdAt', 'backupStartedAt', 'backupCompletedAt']) time(m[key])
@@ -106,7 +107,7 @@ export function validateManifest(value: unknown): BackupManifestV1 {
     } else fail()
   }
   if (!paths.has('data/structured-data.json')) fail()
-  return m as unknown as BackupManifestV1
+  return m as unknown as BackupManifest
 }
 export function parseJson(bytes: Uint8Array): unknown {
   try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as unknown }

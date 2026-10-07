@@ -14,7 +14,7 @@ const revision = '2026-10-06T10:00:00.123456+00:00', deletedRevision = '2026-10-
 const draft = { ...blankDraft(), title: '测试书籍', author: '测试作者', translator: '测试译者', status: '读完' as const, finishedOn: '2025-09-28', note: '测试笔记' }
 const row: Database['public']['Tables']['books']['Row'] = {
   id, household_id: householdId, profile_id: profileId, title: draft.title, author: draft.author, translator: draft.translator,
-  status: 'finished', started_on: null, finished_on: draft.finishedOn, rating: null, notes: draft.note,
+  status: 'finished', started_on: null, finished_on: draft.finishedOn, progress_percent: null, rating: null, notes: draft.note,
   cover_original_path: null, cover_original_filename: null, cover_mime_type: null, cover_position_x: .5, cover_position_y: .5,
   created_at: revision, updated_at: revision, deleted_at: null, deleted_by: null,
 }

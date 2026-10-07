@@ -53,7 +53,7 @@ export function bookMessage(error: unknown, action: 'load' | 'save' | 'delete' |
   const code = errorCode(error)
   if (['PGRST301', 'bad_jwt', 'jwt_expired', 'session_expired', 'refresh_token_not_found'].includes(code)) return '登录已失效，请重新登录；未保存内容暂留在本次会话。'
   if (code === '42501') return '无法访问这条记录，请核对书房权限后重试。'
-  if (code.startsWith('invalid_')) return '请检查书名、作者、评分和阅读日期。'
+  if (code.startsWith('invalid_')) return '请检查书名、作者、评分、进度和阅读日期。'
   return action === 'save' ? '暂时无法保存，请稍后重试。' : action === 'delete' ? '暂时无法移除，请稍后重试。' : action === 'restore' ? '暂时无法恢复，请稍后重试。' : '暂时无法连接书房，请稍后重试。'
 }
 export function createBooksService(repository: BooksRepository, householdId: string, profileId: string) {

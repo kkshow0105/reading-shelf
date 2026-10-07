@@ -1,5 +1,11 @@
 # 私人书架 / Reading Shelf
 
+5C-1 已由用户完成正式 iPhone 验收：主动更新后连续两次 Shelf → Detail → Back，封面保持显示，不再整片空白后逐张出现；阅读进度与其他项目也已通过，无新增导航、滚动、表单或档案切换问题。在读 / 暂停支持可清除的 0～100% 阅读进度；同档案详情期间保留当前 Shelf，返回复用原 img DOM、不重播整页淡入，非首屏保持 lazy / async。完整审计、migration、测试与最终收尾见 [5C-1](docs/BOOK-PERFORMANCE-5C1.md)。不进入 thumbnail、Offline、IndexedDB 或 Sync。
+
+桌面 Chromium 的11张封面为200 / 0 B / disk cache；iPhone没有 Network级egress明细，真机视觉通过不等于已证明0 B。Thumbnail Recommendation保持B：几十 / 上百本时再评估；没有新增图片网络缓存、thumbnail或SW Storage cache。
+
+新 ZIP / JSON 导出为 formatVersion 2，包含 nullable 数值 progressPercent；当前恢复同时支持旧 5A v1（缺少进度恢复为 NULL）和 v2。旧版应用不能恢复 v2，请先主动更新；用户此前下载的 v1 文件不需修改。CSV 增加“阅读进度”列，空白与 0 区分。恢复仍仅限另一个空书房，自动测试不恢复正式数据。
+
 第三阶段整体视觉保持；4B-2/4B-3及5A正式验收完成，未执行正式恢复。5B PWA的iPhone正式验收通过，A→B主动确认更新/单次刷新/Session保持及关闭重开正常；Version B排序、iOS字体、自然封面、大图与家庭输入建议一并验收通过。[稳定HTTPS地址](https://reading-shelf-ten.vercel.app/)不变；Offline未实现。
 
 第三阶段规范与独立历史原型继续保留，正式入口不导入mock。5B交付/验证/历史工具限制见[PWA记录](docs/PWA-5B.md)，最终独立提交包含已验收的Version B改进；完成后停止，不推进离线。
@@ -24,6 +30,8 @@ npm.cmd run dev
 npm.cmd run build
 npm.cmd test
 ```
+
+5C-1 首次渲染集成检查：`node scripts/verify-reading-ui.mjs`（使用已安装的 React / Vite，不安装浏览器）。经授权的隔离远端进度验证：`node --experimental-strip-types scripts/verify-progress-remote.mjs`；它仅在核实唯一 project ref 后创建并精确清理自己的临时 UUID。
 
 构建包含 TypeScript 检查；测试使用 Node 自带的测试运行器与 TypeScript 类型剥离，不安装测试框架。Node 22.12 会显示类型剥离的 experimental 提示，正常情况下不影响测试结果。
 

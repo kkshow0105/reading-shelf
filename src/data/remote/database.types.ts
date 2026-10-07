@@ -31,6 +31,7 @@ export type Database = {
           id: string
           notes: string | null
           profile_id: string
+          progress_percent: number | null
           rating: number | null
           started_on: string | null
           status: string
@@ -53,6 +54,7 @@ export type Database = {
           id?: string
           notes?: string | null
           profile_id: string
+          progress_percent?: number | null
           rating?: number | null
           started_on?: string | null
           status?: string
@@ -75,6 +77,7 @@ export type Database = {
           id?: string
           notes?: string | null
           profile_id?: string
+          progress_percent?: number | null
           rating?: number | null
           started_on?: string | null
           status?: string

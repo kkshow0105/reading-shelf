@@ -15,6 +15,7 @@ export interface Book {
   startedOn: string
   finishedOn: string
   rating: number | null
+  progressPercent: number | null
   note: string
   cover: string // Original image source; never replaced with a cropped rendition.
   cropPosition?: CropPosition // Missing on older records means centered display.

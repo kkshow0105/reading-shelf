@@ -1,6 +1,6 @@
 import { validateOriginalFile } from '../covers/files.ts'
 import { BackupError, BACKUP_LIMITS } from './types.ts'
-import type { BackupManifestV1, StructuredBackupV1, ValidatedBackup } from './types.ts'
+import type { BackupManifest, StructuredBackup, ValidatedBackup } from './types.ts'
 import { parseJson, safeArchivePath, validateManifest, validateStructured } from './validation.ts'
 
 export function bytesBlob(bytes: Uint8Array, type = 'application/octet-stream') { return new Blob([new Uint8Array(bytes).buffer], { type }) }
@@ -8,10 +8,10 @@ export async function sha256(bytes: Uint8Array) {
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array(bytes).buffer)), v => v.toString(16).padStart(2, '0')).join('')
 }
 export function jsonBytes(value: unknown) { return new TextEncoder().encode(JSON.stringify(value, null, 2)) }
-export function crossCheck(manifest: BackupManifestV1, data: StructuredBackupV1) {
+export function crossCheck(manifest: BackupManifest, data: StructuredBackup) {
   const covers = manifest.files.filter(f => f.kind === 'cover'), referenced = covers.filter(f => f.referencedByBookId !== null)
   const fail = () => { throw new BackupError('备份清单、数量或封面引用不一致，无法恢复。') }
-  if (manifest.household.id !== data.household.id || manifest.household.name !== data.household.name || manifest.profileCount !== data.profiles.length
+  if (manifest.formatVersion !== data.formatVersion || manifest.household.id !== data.household.id || manifest.household.name !== data.household.name || manifest.profileCount !== data.profiles.length
     || manifest.bookCount !== data.books.length || manifest.softDeletedBookCount !== data.books.filter(b => b.deletedAt).length
     || manifest.activeBookCount !== data.books.filter(b => !b.deletedAt).length || manifest.coverFileCount !== covers.length
     || manifest.referencedCoverFileCount !== referenced.length || manifest.historicalCoverFileCount !== covers.length - referenced.length) fail()
@@ -25,7 +25,7 @@ export function crossCheck(manifest: BackupManifestV1, data: StructuredBackupV1)
   }
   if (data.books.filter(b => b.cover).length !== referenced.length) fail()
 }
-export async function packArchive(manifest: BackupManifestV1, files: Map<string, Uint8Array>) {
+export async function packArchive(manifest: BackupManifest, files: Map<string, Uint8Array>) {
   const { zipSync } = await import('fflate')
   const input: Record<string, Uint8Array> = Object.create(null)
   input['manifest.json'] = jsonBytes(manifest)

@@ -37,6 +37,9 @@ export function assertPosition(position: CropPosition) {
 export function assertRating(value: unknown): asserts value is number | null {
   if (value !== null && !(typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5)) throw new DataAccessError('invalid_rating', '评分必须为空或 1～5 的整数。')
 }
+export function assertProgress(value: unknown): asserts value is number | null {
+  if (value !== null && !(typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100)) throw new DataAccessError('invalid_progress', '阅读进度必须为空或 0～100 的整数。')
+}
 function date(value: string) {
   if (!value) return null
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) throw new DataAccessError('invalid_date', '阅读日期无效。')
@@ -48,12 +51,13 @@ export function draftColumns(draft: BookDraft) {
   const status = statusToDatabase[draft.status]
   if (typeof status !== 'string') throw new DataAccessError('invalid_status', '阅读状态无效。')
   assertRating(draft.rating)
+  assertProgress(draft.progressPercent)
   const started = date(draft.startedOn), finished = date(draft.finishedOn)
   if (started && finished && started > finished) throw new DataAccessError('invalid_date', '结束日期不能早于开始日期。')
   if (finished && ['在读', '暂停'].includes(draft.status)) throw new DataAccessError('invalid_date', '在读或暂停记录不能保留结束日期。')
   const position = draft.cropPosition ? assertPosition(draft.cropPosition) : undefined
   return { title, author, translator: draft.translator || null, status, started_on: started,
-    finished_on: finished, rating: draft.rating, notes: draft.note || null,
+    finished_on: finished, rating: draft.rating, progress_percent: draft.progressPercent, notes: draft.note || null,
     ...(position ? { cover_position_x: position.x, cover_position_y: position.y } : {}) }
 }
 export function record(value: unknown): Record<string, unknown> {

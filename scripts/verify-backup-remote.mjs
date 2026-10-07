@@ -41,14 +41,14 @@ async function fixture() {
   return { ...user, repo, householdId: boot.data, profiles: await repo.profiles() }
 }
 try {
-  const source = await fixture(), target = await fixture(), outside = await fixture()
+  const source = await fixture(), target = await fixture(), legacyTarget = await fixture(), outside = await fixture()
   const bookRepo = createRepositories(source.client, source.householdId).books, covers = createCoverService(source.client)
   const images = [['near-2x3.jpg', 'image/jpeg'], ['wide.png', 'image/png'], ['tall.webp', 'image/webp']].map(([name, type]) => new File([readFileSync('qa/cover-fixtures/' + name)], name, { type }))
   const statuses = ['想读', '在读', '读完', '暂停', '弃读'], records = []
   for (let i = 0; i < 5; i++) {
     const profileId = source.profiles[i < 3 ? 0 : 1].id
     const draft = { title: i === 3 ? '=测试公式,"书名"' : `临时记录${i + 1}`, author: '临时作者', translator: i % 2 ? '临时译者' : '', status: statuses[i],
-      startedOn: i === 0 ? '' : '2026-09-01', finishedOn: i === 2 || i === 4 ? '2026-09-28' : '', rating: i % 2 ? null : 5, note: '第一行\n第二行：逗号,与"引号"', cover: '', cropPosition: { x: .2 + i * .1, y: .8 - i * .1 } }
+      startedOn: i === 0 ? '' : '2026-09-01', finishedOn: i === 2 || i === 4 ? '2026-09-28' : '', rating: i % 2 ? null : 5, progressPercent: [null, 0, 1, 50, 100][i], note: '第一行\n第二行：逗号,与"引号"', cover: '', cropPosition: { x: .2 + i * .1, y: .8 - i * .1 } }
     let record = await bookRepo.createBook(profileId, draft)
     if (i < 3) {
       const scope = { householdId: source.householdId, profileId, bookId: record.book.id }
@@ -111,7 +111,7 @@ try {
   for (const original of backup.data.books) {
     const current = output.books.find(b => b.id === restored.bookMapping[original.id])
     check(current && current.id !== original.id && current.profileId === restored.profileMapping[original.profileId] && current.profileId !== original.profileId, 'new book and profile IDs')
-    for (const key of ['title', 'author', 'translator', 'status', 'startedOn', 'finishedOn', 'rating', 'notes']) check(current[key] === original[key], 'restored field equality')
+    for (const key of ['title', 'author', 'translator', 'status', 'startedOn', 'finishedOn', 'rating', 'progressPercent', 'notes']) check(current[key] === original[key], 'restored field equality')
     check(JSON.stringify(current.cropPosition) === JSON.stringify(original.cropPosition) && Boolean(current.deletedAt) === Boolean(original.deletedAt), 'crop/deleted state equality')
     if (original.cover) {
       check(current.cover.originalPath !== original.cover.originalPath && current.cover.originalPath.startsWith(`${target.householdId}/${current.profileId}/${current.id}/original/`), 'new scoped original path')
@@ -125,6 +125,20 @@ try {
   check((await inspectTarget(target.repo, target.id, backup)).allowed === false, 'nonempty target cannot repeat restore')
   let repeated = false; try { await job.run() } catch { repeated = true }; check(repeated, 'completed checkpoint cannot duplicate restore')
   pass('all record fields new IDs/paths exact image SHA verified; original clocks historical and new clocks server generated; nonempty repeat blocked')
+  // Rebuild a genuine pre-progress v1 ZIP from temporary data and unchanged original bytes.
+  const legacyData = structuredClone(backup.data); legacyData.formatVersion = 1
+  for (const book of legacyData.books) delete book.progressPercent
+  const legacyBytes = jsonBytes(legacyData), legacyFiles = new Map(backup.files)
+  legacyFiles.set('data/structured-data.json', legacyBytes)
+  const legacyManifest = { ...backup.manifest, formatVersion: 1, files: backup.manifest.files.map(f => f.kind === 'data' ? { ...f, size: legacyBytes.length, sha256: '' } : f) }
+  legacyManifest.files.find(f => f.kind === 'data').sha256 = await sha256(legacyBytes)
+  const { packArchive } = await import('../src/data/backup/archive.ts')
+  const legacyBackup = await openArchive(await packArchive(legacyManifest, legacyFiles))
+  const legacyJob = new RestoreSession(legacyTarget.repo, legacyTarget.id, legacyBackup)
+  const legacyResult = await legacyJob.run()
+  check(legacyResult.complete && legacyResult.bookCount === 5 && legacyResult.coverCount === 3, 'v1 real empty-household ZIP restore complete')
+  check((await legacyTarget.repo.books()).every(b => b.progress_percent === null), 'v1 all restored progress NULL')
+  pass('v2 progress NULL/0/1/50/100 restored; pre-progress v1 ZIP including covers restored with progress NULL')
   mkdirSync('qa/backup-fixtures', { recursive: true }); writeFileSync('qa/backup-fixtures/valid.zip', exported.bytes)
   finalResult = { passed: true, profiles: 2, sourceBooks: 5, sourceCovers: 4, restoredBooks: 5, restoredCurrentCovers: 3, historicalKeptInZip: 1, softDeleted: 1 }
 } catch (error) {

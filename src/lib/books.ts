@@ -2,10 +2,10 @@ import type { Book, Filters, SortOrder, BookDraft } from '../types/index.ts'
 import { defaultCropPosition, normalizeCropPosition } from './covers.ts'
 
 export const emptyFilters = (): Filters => ({ statuses: [], ratings: [], years: [] })
-export const blankDraft = (): BookDraft => ({ title: '', author: '', translator: '', status: '想读', startedOn: '', finishedOn: '', rating: null, note: '', cover: '', cropPosition: defaultCropPosition() })
+export const blankDraft = (): BookDraft => ({ title: '', author: '', translator: '', status: '想读', startedOn: '', finishedOn: '', rating: null, progressPercent: null, note: '', cover: '', cropPosition: defaultCropPosition() })
 export function toDraft(book: Book): BookDraft {
-  const { title, author, translator, status, startedOn, finishedOn, rating, note, cover } = book
-  return { title, author, translator, status, startedOn, finishedOn, rating, note, cover, cropPosition: normalizeCropPosition(book.cropPosition) }
+  const { title, author, translator, status, startedOn, finishedOn, rating, progressPercent, note, cover } = book
+  return { title, author, translator, status, startedOn, finishedOn, rating, progressPercent, note, cover, cropPosition: normalizeCropPosition(book.cropPosition) }
 }
 export function readingDate(book: Pick<Book, 'status' | 'finishedOn' | 'startedOn'>): string {
   return (book.status === '读完' || book.status === '弃读') ? book.finishedOn || book.startedOn : book.startedOn
@@ -52,6 +52,7 @@ export function validateDraft(draft: BookDraft): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!draft.title.trim()) errors.title = '请写下书名。'
   if (!draft.author.trim()) errors.author = '请填写作者，不详时可填写“佚名”。'
+  if (draft.progressPercent !== null && !(Number.isInteger(draft.progressPercent) && draft.progressPercent >= 0 && draft.progressPercent <= 100)) errors.progressPercent = '阅读进度应为 0～100 的整数，或留空。'
   const today = new Date().toLocaleDateString('en-CA')
   if (draft.startedOn && draft.startedOn > today) errors.startedOn = '实际阅读日期不能在未来。'
   if (draft.finishedOn && draft.finishedOn > today) errors.finishedOn = '实际阅读日期不能在未来。'

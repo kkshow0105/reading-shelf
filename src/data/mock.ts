@@ -3,7 +3,7 @@ export const profiles: Profile[] = [
   { id: 'lin', name: '林予', description: '文学、哲学，与一些旧日的故事。' },
   { id: 'chen', name: '陈禾', description: '慢慢读，偶尔写几句。' },
 ]
-const books: Omit<Book, 'profileId'>[] = [
+const books: Omit<Book, 'profileId' | 'progressPercent'>[] = [
   { id: 'siddhartha', title: '悉达多', author: '赫尔曼·黑塞', translator: '姜乙', status: '读完', startedOn: '2026-09-20', finishedOn: '2026-09-28', rating: 5, note: '读到最后，留下的不是一个答案，而是河水的声音。\n\n有些书不需要急着理解。把它放在手边，在不同的日子重新翻开，或许会看见不同的自己。', cover: '/covers/siddhartha.svg', createdAt: '2026-09-20T09:00:00+08:00' },
   { id: 'sisyphus', title: '西西弗神话', author: '阿尔贝·加缪', translator: '杜小真', status: '读完', startedOn: '2026-09-06', finishedOn: '2026-09-18', rating: 4, note: '缓慢地读了两遍。生活中的重复，偶尔也能有自己的重量。', cover: '/covers/sisyphus.svg', createdAt: '2026-09-06T09:00:00+08:00' },
   { id: 'stranger', title: '局外人', author: '阿尔贝·加缪', translator: '柳鸣九', status: '读完', startedOn: '2026-08-25', finishedOn: '2026-08-30', rating: 5, note: '很短，却读了很久。那些看似平静的句子，合上书之后还在回响。', cover: '/covers/stranger.svg', createdAt: '2026-08-25T09:00:00+08:00' },
@@ -18,7 +18,7 @@ const books: Omit<Book, 'profileId'>[] = [
   { id: 'sea', title: '老人与海', author: '欧内斯特·海明威', translator: '', status: '读完', startedOn: '2026-08-31', finishedOn: '2026-09-02', rating: 4, note: '短短一程，像在海边坐了一个下午。', cover: '/covers/sea.svg', createdAt: '2026-08-31T09:00:00+08:00' },
 ]
 export function createMockBooks(): Book[] {
-  const first = books.map(book => ({ ...book, id: `lin-${book.id}`, profileId: 'lin' }))
-  const second = books.slice(0, 8).map((book, index) => ({ ...book, id: `chen-${book.id}`, profileId: 'chen', rating: index % 3 === 0 ? null : index % 2 === 0 ? 3 : 5, status: (index === 0 ? '在读' : index === 5 ? '想读' : '读完') as Book['status'], startedOn: index === 5 ? '' : '2026-08-01', finishedOn: index === 0 || index === 5 ? '' : `2026-08-${String(10 + index).padStart(2, '0')}`, note: index === 1 ? '同一本书，在不同人的心里会留下不同的痕迹。' : '' }))
+  const first = books.map(book => ({ ...book, progressPercent: null, id: `lin-${book.id}`, profileId: 'lin' }))
+  const second = books.slice(0, 8).map((book, index) => ({ ...book, progressPercent: null, id: `chen-${book.id}`, profileId: 'chen', rating: index % 3 === 0 ? null : index % 2 === 0 ? 3 : 5, status: (index === 0 ? '在读' : index === 5 ? '想读' : '读完') as Book['status'], startedOn: index === 5 ? '' : '2026-08-01', finishedOn: index === 0 || index === 5 ? '' : `2026-08-${String(10 + index).padStart(2, '0')}`, note: index === 1 ? '同一本书，在不同人的心里会留下不同的痕迹。' : '' }))
   return [...first, ...second]
 }

@@ -7,13 +7,13 @@ export interface BackupHousehold { id: string; name: string; originalCreatedAt: 
 export interface BackupProfile { id: string; name: string; sortOrder: number; archivedAt: string | null; originalCreatedAt: string; originalUpdatedAt: string }
 export interface BackupBook {
   id: string; profileId: string; title: string; author: string; translator: string;
-  status: BackupStatus; startedOn: string | null; finishedOn: string | null; rating: number | null;
+  status: BackupStatus; startedOn: string | null; finishedOn: string | null; rating: number | null; progressPercent: number | null;
   notes: string; cropPosition: CropPosition;
   cover: { originalPath: string; originalFilename: string; mimeType: CoverMime } | null;
   originalCreatedAt: string; originalUpdatedAt: string; deletedAt: string | null; deletedByOriginal: string | null;
 }
-export interface StructuredBackupV1 {
-  format: 'reading-shelf-structured-export'; formatVersion: 1; createdAt: string; coverFilesIncluded: false;
+export interface StructuredBackup {
+  format: 'reading-shelf-structured-export'; formatVersion: 1 | 2; createdAt: string; coverFilesIncluded: false;
   household: BackupHousehold; profiles: BackupProfile[]; books: BackupBook[];
 }
 interface FileBase { path: string; size: number; sha256: string }
@@ -21,15 +21,15 @@ export type BackupFileEntry = (FileBase & { kind: 'data' }) | (FileBase & {
   kind: 'cover'; profileId: string; bookId: string; originalStoragePath: string;
   originalFilename: string | null; mimeType: CoverMime; referencedByBookId: string | null;
 })
-export interface BackupManifestV1 {
-  format: 'reading-shelf-backup'; formatVersion: 1; createdAt: string; backupStartedAt: string; backupCompletedAt: string;
+export interface BackupManifest {
+  format: 'reading-shelf-backup'; formatVersion: 1 | 2; createdAt: string; backupStartedAt: string; backupCompletedAt: string;
   source: 'supabase'; household: { id: string; name: string };
   profileCount: number; bookCount: number; activeBookCount: number; softDeletedBookCount: number;
   coverFileCount: number; referencedCoverFileCount: number; historicalCoverFileCount: number;
   backupIncludes: ['structuredData', 'covers', 'softDeletedRecords', 'historicalOriginals'];
   hashAlgorithm: 'SHA-256'; restoreHistoricalCovers: 'keep-in-zip'; files: BackupFileEntry[];
 }
-export interface ValidatedBackup { manifest: BackupManifestV1; data: StructuredBackupV1; files: Map<string, Uint8Array>; identity: string }
+export interface ValidatedBackup { manifest: BackupManifest; data: StructuredBackup; files: Map<string, Uint8Array>; identity: string }
 export type BackupProgress = (message: string) => void
 export interface RestoreFailure { stage: 'profiles' | 'books' | 'covers' | 'deletion' | 'verification'; oldId: string | null; message: string }
 export interface RestoreResult {

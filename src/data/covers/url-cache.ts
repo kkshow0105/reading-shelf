@@ -13,11 +13,16 @@ export class CoverUrlCache {
   private load: (source: CoverSource) => Promise<{ url: string; expiresIn: number }>
   private now: () => number
   constructor(load: (source: CoverSource) => Promise<{ url: string; expiresIn: number }>, now = Date.now) { this.load = load; this.now = now }
+  peek(source: CoverSource): CoverLink | undefined {
+    const path = assertCoverPath(source.path, source.scope)
+    const hit = this.links.get(path)
+    return hit && hit.expiresAt - this.now() > COVER_URL_REFRESH_MS ? hit : undefined
+  }
   get(source: CoverSource, refresh = false) {
     const path = assertCoverPath(source.path, source.scope)
     if (refresh) this.links.delete(path)
-    const hit = this.links.get(path)
-    if (hit && hit.expiresAt - this.now() > COVER_URL_REFRESH_MS) return Promise.resolve(hit)
+    const hit = this.peek(source)
+    if (hit) return Promise.resolve(hit)
     const inflight = this.pending.get(path)
     if (inflight) return inflight
     const generation = this.generation, started = this.now()
