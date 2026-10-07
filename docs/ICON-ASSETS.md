@@ -1,4 +1,52 @@
-# Reading Shelf · B2 正式图标资源
+# Reading Shelf · 正式图标资源
+
+## V2 · 当前正式图标（iPhone正式验收通过）
+
+**Current production icon = V2。** 用户最终确认的唯一源图为“奶油白 + 蓝色层叠书页”。本轮只做工程导出与接入，没有AI重绘、重新解释设计、裁切、配色、文字、边框、预画圆角、主体重排或锐化。页面主色与主题保持既有暖纸色；图标蓝色不成为新的UI token。
+
+源图实际1254×1254、RGB、不透明PNG，完整解码正常，目视没有画布白边、展示背景、文字或九宫格残留。原始字节归档SHA-256：`48c5e0de5710512e55ce1e7e700e88106f0cdf7cc799c380ed87ec6cd97ec104`。1254仅向下LANCZOS缩至1024母版，没有放大冒充高清；所有普通尺寸和ICO帧均从同一1024母版直接等比导出。
+
+| 文件（项目相对路径） | 规格 | 用途 |
+|---|---|---|
+| public/icons/source/reading-shelf-icon-v2-source.png | 1254×1254 RGB PNG，原始字节 | 用户正式源图归档，不入manifest/precache |
+| public/icons/reading-shelf-v2-1024.png | 1024×1024 RGB PNG | 唯一导出母版，不入manifest/precache |
+| public/icons/reading-shelf-v2-512.png | 512×512 RGB PNG | manifest普通purpose=any |
+| public/icons/reading-shelf-v2-192.png | 192×192 RGB PNG | manifest普通purpose=any |
+| public/icons/apple-touch-icon-v2-180.png | 180×180 RGB PNG | HTML Apple touch icon，原构图无安全框/二次圆角 |
+| public/icons/favicon-v2-32.png | 32×32 RGB PNG | HTML PNG favicon |
+| public/icons/favicon-v2.ico | 16×16、32×32、48×48三帧 | HTML传统favicon，各帧像素与母版等比缩放一致 |
+| public/icons/reading-shelf-v2-maskable-512.png | 512×512 RGB PNG | 独立purpose=maskable |
+| public/icons/reading-shelf-v2-maskable-192.png | 192×192 RGB PNG | 独立purpose=maskable |
+
+maskable是技术适配：完整1024画面分别等比缩为272/102，居中偏移120/45；中心画面每个像素与对应LANCZOS结果完全相同。外围只延续原图边缘颜色，离边界越远越柔和，保留左暖奶油/右蓝及原有明暗方向；没有新图案、黑白硬边或主体修改。普通图标没有因此同步缩小主体。
+
+按照[W3C安全区](https://www.w3.org/TR/appmanifest/#icon-masks)，中央安全圆半径为边长40%；完整内图方形最远角落距安全圆还留512版12.47px、192版4.68px。安全圆、circle、Android rounded-square及大圆角四种机械mask均未裁掉内图任何部分；外围延展可由系统裁切。预览在ignored qa/icon-v2-maskable-preview.png，不是资源本身，不冒充Android/iPhone真机结果。
+
+脚本`scripts/export-icon-assets-v2.py`使用本机已有Pillow，不安装任何依赖、不联网；只接受已确认源图hash，拒绝覆盖既有V2输出。`python scripts/export-icon-assets-v2.py --check`可复验源图、全部尺寸/RGB/像素等比关系、ICO帧、safe-zone和mask。qa/icon-v2-native-sizes.png包含192/180/32/16原生大小预览；192/180层叠书页清晰，32仍能辨认，16细节自然减少但无异常黑边/halo，不为小尺寸重绘。
+
+正式接入只改变vite.config.ts的icons/includeAssets和index.html三条图标link。manifest为V2普通192/512的any与专用192/512的maskable，name/short_name/start_url/display/theme_color/background_color/id/scope保持不变。HTML仅一条ICO、一条PNG和一条Apple180，无重复旧声明；旧B2不再在当前manifest/HTML/precache正式入口引用。现有revision构建纳入七个V2运行图标，不手工编辑Workbox cache、更新机制或runtimeCaching；Supabase/Storage/signed URL缓存边界不变。
+
+**iOS安装图标可能保留旧缓存。** 正式验证时可能需要删除旧主屏幕PWA，再用Safari打开https://reading-shelf-ten.vercel.app/并“添加到主屏幕”。这是图标缓存行为，不修改业务代码绕过。用户先确认当前数据无异常；此处删除的是安装入口，不是云端Books/Storage，仍应避免丢失未保存会话草稿。本人真机验收前不commit/push/amend，不能将机械预览写作真机通过。
+
+### V2工程检查与同origin部署 checkpoint
+
+production build/TypeScript、98/98 unit/service tests及导出脚本--check均通过。manifest静态字段/引用/尺寸/purpose与HTML检查正常，build没有manifest/icon warning；保留既有JS>500kB和PWA closeBundle耗时提示。PWA仍17项静态precache1030.48KiB，七个运行图标全部V2，源图和1024母版未加入precache；用户主动确认更新机制及Supabase/Storage/signed URL runtime cache边界完全保持。旧B2和所有src业务/依赖/数据库文件的baseline hash不变。
+
+允许部署后使用既有reading-shelf Vercel项目发布：dpl_J14KFaRdQgJ6f4xar3xC7idhg8wv / production READY。稳定地址https://reading-shelf-ten.vercel.app/不变，43个静态文件包括九个V2资源全部200且与本地字节一致，PNG/ICO/manifest MIME及SW/manifest更新缓存头正确。历史图标和旧hash assets仍可访问，仅作为历史/旧客户端兼容，不在当前manifest/HTML/precache正式引用。无新的测试origin、业务数据/封面上传或依赖安装。
+
+部署前/后正式HH1/Profiles2/Books15/Storage16、全部字段（含progress）及对象元数据SHA-256均为efe1befc7719215921692219241e7d149eb1b4c279b5e027390034626b2384f5；仅SELECT核对，没有Auth/Books/Storage/迁移写入，也未执行任何恢复。139个候选/实际上传文本secret扫描0命中，diff --check通过。开始clean，现6 modified/10新增文件/0 staged，HEAD仍1e7a846；新增仅源图、八个派生资源和导出脚本。等待用户确认“V2图标正式验收完成”后才最终提交feat: replace reading shelf app icons，不amend/push。本段是自动工程/资源交付结果，不表示iPhone/Android安装通过。
+
+### V2正式人工验收 · 2026-10-08
+
+用户本人确认在iPhone真机重新添加主屏幕后，V2奶油白/蓝色层叠书页显示正确，小尺寸清晰、比B2简洁，无额外白边、二次圆角/外框、异常裁切，构图和颜色正常；PWA打开及现有功能正常。正式结果来自用户人工确认，不是静态预览或桌面模拟。B2继续完整保留为历史设计资产，生产manifest/HTML/precache只引用V2；iOS缓存/重新添加说明仍保留，Android不冒称完成真机验收。
+
+本轮按用户授权进行独立图标提交feat: replace reading shelf app icons，并将已存在的5C-1提交1e7a846与图标提交从当前main正常推送到指定的现有远端，不amend、不新建分支、不force push。开始检查发现本地没有任何Git远端或upstream配置，已向用户请求现有仓库地址；先完成确定的本地收尾，推送目标不猜测。最终验证及推送结果见下方补记或Git历史/最终回复。
+
+最终重新build/TypeScript、98/98 tests与导出--check通过；1024/512/192/180/favicon PNG与ICO16/32/48/maskable逐像素和安全区验证均通过，manifest/Apple/favicon只用V2，17静态precache及主动确认更新策略不变。所有业务/数据库/依赖与B2旧资源hash未变，没有新增依赖或重新部署。130个候选/build文本secret扫描0、diff --check通过；源图SHA仍48c5e0de…，正式完整数据指纹仍efe1befc…（1HH/2Profiles/15Books/16Storage，含progress），与部署后记录一致。QA/env/测试备份/本机关联不入Git，原B2历史不删除。提交/远端结果及最终clean由Git历史与最终回复核实。
+
+## B2 · 历史第一版正式图标
+
+下面完整保留B2的原始源图、导出方法、生成prompt和5B验收证据。旧assets/branding源文件与public/icons普通/maskable/Apple/favicon字节均不改、不永久删除；它们不再是当前生产入口的图标方向。
 
 **5B正式验收 · 2026-10-07：** 冻结的普通图标/Apple/favicon字节未变，HTML已接入。新增maskable-512/192为同一B2完整构图机械缩小并加外围背景；512内图288、偏移112，192内图108、偏移42，整个内图均落在半径40%的中心安全圆内，像素复核通过。manifest普通图标仅any、专用版本仅maskable；iPhone正式安装/主屏幕体验已通过，Android未冒充真机验收。模拟预览位于ignored qa/pwa-maskable-preview.png；可用scripts/export-maskable-icons.py --check复核。当前状态见[5B](PWA-5B.md)。
 

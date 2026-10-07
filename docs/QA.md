@@ -443,3 +443,25 @@ build/TS、98/98 tests、React初次渲染/直接详情/隐藏菜单检查通过
 remote progress完整CRUD/NULL/0/1/35/67/50/100、状态独立、非法值CHECK、跨家庭RLS/DELETE测试通过；remote backup v2五本NULL/0/1/50/100及v1五本全NULL恢复、原图SHA、历史保留、损坏/缺文件/未来版本、部分失败/重试/重复恢复/权限矩阵全部通过。每组测试只操作新临时账号/书房；精确UUID/路径清理后Auth/Household/Members/Profiles/Books/Storage为0，活动progress/backup账本无残留，测试邮件Auth聚合0。
 
 正式前后1HH/2Profiles/15Books/16Storage与完整指纹efe1befc7719215921692219241e7d149eb1b4c279b5e027390034626b2384f5相同，包含正式progress，不清空本人使用产生的数据，不读取正式下载文件，不执行正式恢复或重跑migration。本轮仅文档更新，业务源码与已验收候选hash相同。125个候选/build文本secret扫描0、diff --check通过，36候选均本阶段范围；测试ZIP/JSON/截图/env/.vercel均不跟踪。独立提交采用feat: add reading progress and improve cover loading，不amend/push，提交后核对clean再停止，不进入thumbnail/Offline/IndexedDB/Sync。
+
+## V2正式图标候选 · 工程检查（2026-10-07，待iPhone安装验收）
+
+开始基线1e7a846352118917c91a9c63832e985532bad4a0、working tree clean。唯一用户源图1254×1254 RGB PNG，完整可读，无展示画布/文字/九宫格；原字节归档于public/icons/source/reading-shelf-icon-v2-source.png，SHA48c5e0de…匹配。仅LANCZOS向下缩成1024母版，普通512/192/Apple180/favicon32及ICO16/32/48各帧与同母版等比导出逐像素一致；不重新设计/AI重绘/裁切/锐化/改颜色，不预画圆角。原生192/180/32/16预览未见严重锯齿/黑边/halo，16细节自然减少但保留层叠方向；预览在ignored qa/。
+
+独立maskable512完整内图272/偏移120，192内图102/偏移45，中心与母版缩放像素完全相同；只对新增外围做原边缘颜色延展与柔化。完整画面最远角到半径40%安全圆尚余12.47/4.68px，安全圆/circle/Android rounded-square/大圆角mask检查均不裁内图；普通版无安全框。静态mask预览不冒充设备安装通过。
+
+production build/TypeScript和98/98测试通过；build没有manifest/icon warning，保留原有JS>500kB和PWA closeBundle耗时提示。17项precache仍静态壳/字体/图标，七个运行图标全部V2，源图/1024不入预缓存；manifest除了icons外与上一生产版本JSON相等，HTML三项图标link均V2且无重复旧声明。当前正式入口不再引用B2，旧B2源图/派生图/脚本/历史文档字节保留。
+
+全src业务、进度、cover-loading/keep-alive、backup、Supabase/migrations/Storage/Auth、PWA更新源码和依赖与开始hash一致；vite仅icons/includeAssets、HTML仅图标link修改，不改PWA cache/update架构。图标导出用已有Pillow，不安装依赖。iPhone新图标尚待本人删除旧主屏幕入口后Safari重新添加；iOS可能保留安装图标缓存，不修改业务代码绕过。未commit/push/amend。
+
+V2正式origin候选发布READY：dpl_J14KFaRdQgJ6f4xar3xC7idhg8wv，https://reading-shelf-ten.vercel.app/不变。无登录HTTP复核：首页及43个静态资源全部200/字节一致，九个V2源/派生资源可访问，PNG/ICO/manifest MIME及SW/manifest更新缓存头正确；旧B2不被现manifest/HTML/precache引用。139个候选/上传文本secret扫描无命中、diff --check通过。
+
+正式前后1HH/2Profiles/15Books/16Storage、含progress的完整字段及Storage元数据指纹efe1befc7719215921692219241e7d149eb1b4c279b5e027390034626b2384f5一致。仅SELECT，不改正式业务/图、Auth或migration；不运行远端写入测试。本轮6 modified/10新增/0 staged，HEAD1e7a846，未commit/push/amend。已暂停等待本人Safari重新添加主屏幕的V2图标验收；静态mask和缩放QA不冒充iPhone真机通过。
+
+## V2图标正式人工验收与最终收尾（2026-10-08）
+
+用户本人确认iPhone重新添加主屏幕后，V2奶油白/蓝色层叠书页正确、清晰、比B2简洁，无额外白边/二次圆角/外框/异常裁切，构图与颜色正常，PWA打开及现有功能正常。B2源图/派生资源/历史证据完整保留，当前生产HTML、manifest及precache仅V2。此次验收不延伸为Android真机通过。
+
+人工确认后重新build/TypeScript和全部98/98 tests通过。导出脚本--check验证1254源图SHA、1024母版、512/192/Apple180/favicon32逐像素同母版LANCZOS、ICO16/32/48三帧和maskable512/192全部通过；安全圆/circle/rounded-square/大圆角不裁内图。manifest除icons外与5C-1一致，HTML三个图标link无旧B2，17静态precache仅七个V2运行图标（源图/1024不缓存），用户主动更新策略、runtimeCaching空及Supabase/Storage边界未改。仅既有大chunk/closeBundle耗时提示。
+
+当前代码和图片与已部署且本人验收的候选一致，本轮只更新必要验收文档；所有src/数据库/依赖和B2历史资源hash未变。130个候选/build文本secret扫描0、diff --check通过，真实env、qa、.vercel、测试备份不入Git。此次独立提交采用feat: replace reading shelf app icons，不amend；用户已授权将5C-1及图标从现有main正常推送，但开始检查发现仓库无任何remote/upstream，已请求明确现有仓库地址，不猜目标或force push。实际commit/push/clean结果由Git历史与最终回复核对。
