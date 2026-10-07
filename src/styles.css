@@ -29,6 +29,15 @@
   --on-accent: #211F1B; --border: #494239; --control-border: #887E70;
   --scrim: rgb(15 14 12 / 56%); --shadow-cover: 0 2px 8px rgb(15 14 12 / 8%); --shadow-cover-hover: 0 4px 8px rgb(15 14 12 / 11%);
 }
+/* The bundled Noto files are finite subsets. Apple touch devices use complete
+   system Chinese families for the whole text run, rather than per-glyph fallback. */
+:root[data-apple-touch="true"] {
+  --font-serif: "Songti SC", "STSong", ui-serif, serif;
+  --font-sans: "PingFang SC", -apple-system, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --paper: #211F1B; --text-primary: #EEE7DC; color-scheme: dark; }
+}
 @theme inline {
   --color-background: var(--paper); --color-foreground: var(--text-primary);
   --color-muted: var(--surface-muted); --color-muted-foreground: var(--text-secondary);
@@ -38,7 +47,7 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--paper); scroll-padding-top: calc(var(--header-height) + 16px); }
+html { background: var(--paper); scroll-padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 16px); }
 body { margin: 0; color: var(--text-primary); font-family: var(--font-sans); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
 button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -50,6 +59,12 @@ button:disabled { cursor: not-allowed; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 /* Programmatic page focus announces navigation; only controls need a ring. */
 main[tabindex="-1"]:focus { outline: none; }
+.pwa-notice { position: fixed; z-index: 30; bottom: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-right)); width: min(560px, calc(100% - 40px)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--control-border); border-radius: var(--radius-overlay); box-shadow: var(--shadow-overlay); }
+.pwa-notice > p { flex: 1 1 200px; overflow-wrap: anywhere; font-size: 16px; }
+.pwa-notice-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pwa-notice .quiet-copy { flex-basis: 100%; font-size: 14px; }
+.pwa-install-link { color: var(--text-secondary); font-size: 14px; }
+:root[data-standalone="true"] .site-footer { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
 h1, h2, h3, p { margin: 0; }
 h1, h2 { font-family: var(--font-serif); font-weight: 600; overflow-wrap: anywhere; }
 h1 { font-size: 28px; line-height: 1.4; }
@@ -128,8 +143,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .book-cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .book-cover[data-presentation="shelf"] img { object-fit: cover; object-position: center; }
 .book-cover-original { aspect-ratio: auto; }
-.book-cover-original[data-remote="true"] { aspect-ratio: var(--cover-ratio); display: grid; place-items: center; }
 .book-cover-original img { height: auto; max-height: 360px; object-fit: contain; }
+.cover-view-trigger { display: block; width: 100%; padding: 0; border: 0; background: transparent; line-height: 0; cursor: zoom-in; }
 .book-entry:active .book-cover { transform: translateY(1px); }
 .cover-fallback { width: 100%; height: 100%; padding: 20px; background: var(--surface-muted); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 24px; overflow-wrap: anywhere; }
 .cover-fallback-rule { width: 24px; height: 1px; background: var(--control-border); }
@@ -225,6 +240,15 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .overlay-title { display: block; font-family: var(--font-serif); font-size: 24px; font-weight: 600; line-height: 1.5; padding-right: 24px; overflow-wrap: anywhere; }
 .overlay-description { font-size: 16px; line-height: 1.75; color: var(--text-secondary); margin-top: 16px; }
 .overlay-close { position: absolute; right: 8px; top: 8px; }
+.dialog-content.cover-lightbox { width: fit-content; max-width: calc(100vw - 40px - env(safe-area-inset-left) - env(safe-area-inset-right)); max-height: calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.cover-lightbox img { display: block; width: auto; height: auto; max-width: min(1120px, calc(100vw - 40px - env(safe-area-inset-left) - env(safe-area-inset-right))); max-height: calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); object-fit: contain; }
+.cover-lightbox .overlay-close { top: 8px; right: 8px; background: var(--surface); border: 1px solid var(--control-border); }
+.cover-lightbox .field-error { padding: 24px; background: var(--surface); }
+.suggestion-field { position: relative; }
+.suggestion-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20; max-height: 240px; overflow-y: auto; overscroll-behavior: contain; padding: 4px; background: var(--surface); border: 1px solid var(--control-border); border-radius: var(--radius-overlay); box-shadow: var(--shadow-overlay); }
+.suggestion-option { display: block; width: 100%; min-height: 48px; padding: 10px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-primary); text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: 16px; line-height: 1.5; }
+.suggestion-option:hover, .suggestion-option[aria-selected="true"] { background: var(--surface-muted); }
+.suggestion-notice { margin-bottom: 16px; color: var(--text-secondary); font-size: 14px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 .draft-dialog-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
 .sheet-content { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; max-height: 80dvh; padding: 24px 24px calc(16px + env(safe-area-inset-bottom)); border-radius: 8px 8px 0 0; display: flex; flex-direction: column; }

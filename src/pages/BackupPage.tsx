@@ -10,6 +10,7 @@ import { inspectTarget, RestoreSession } from '../data/backup/restore'
 import { validateBrowserCover } from '../data/covers/files'
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog'
+import { usePwaUpdateGuard } from '../pwa/PwaProvider'
 
 export default function BackupPage({ householdId, userId, profileId, onNavigate, mutate }: {
   householdId: string; userId: string; profileId: string; onNavigate: (path: string) => void;
@@ -21,6 +22,7 @@ export default function BackupPage({ householdId, userId, profileId, onNavigate,
   const [report, setReport] = useState<RestoreResult | null>(null)
   const input = useRef<HTMLInputElement>(null), cancel = useRef<HTMLButtonElement>(null), gate = useRef(false), session = useRef<RestoreSession | null>(null)
   const chooserButton = useRef<HTMLButtonElement>(null), controller = useRef<AbortController | null>(null)
+  usePwaUpdateGuard(() => gate.current ? 'busy' : preview || report && !report.complete ? 'confirm' : 'safe')
   const work = async (action: () => Promise<void>) => {
     if (gate.current) return
     gate.current = true; setBusy(true); setError('')

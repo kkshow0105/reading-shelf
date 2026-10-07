@@ -6,6 +6,7 @@ import { Input } from './ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator } from './ui/dropdown-menu'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet'
 import { useMediaQuery } from '@/lib/useMediaQuery'
+import { usePwa } from '@/pwa/PwaProvider'
 
 const themeNames: Record<Theme, string> = { system: '跟随系统', light: '浅色', dark: '深色' }
 function ThemeMenu({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
@@ -17,6 +18,7 @@ function ThemeMenu({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) =
 }
 export function Header({ profiles, profile, shelf = false, query = '', onQuery, theme, onTheme, onNavigate, onLogout, logoutBusy }: { profiles: Profile[]; profile?: Profile; shelf?: boolean; query?: string; onQuery?: (query: string) => void; theme: Theme; onTheme: (theme: Theme) => void; onNavigate: (path: string) => void; onLogout?: () => void; logoutBusy?: boolean }) {
   const compact = useMediaQuery('(max-width: 1024px)')
+  const pwa = usePwa()
   const [switchOpen, setSwitchOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -44,6 +46,7 @@ export function Header({ profiles, profile, shelf = false, query = '', onQuery, 
       <div className="profile-choices">{profiles.map(p => <Button className="profile-choice" key={p.id} onClick={() => chooseProfile(p.id)}>{p.name}{p.id === profile?.id && <span className="current-profile">当前书房 <Check size={16} aria-hidden="true" /></span>}</Button>)}</div>
       <Button className="all-profiles" onClick={() => { setSwitchOpen(false); onNavigate('/profiles') }}>所有书房</Button>
       <Button className="all-profiles" onClick={() => { setSwitchOpen(false); if (profile) onNavigate(`/p/${profile.id}/backup`) }}>数据与备份</Button><div className="sheet-theme"><label htmlFor="mobile-theme">外观</label><select id="mobile-theme" className="native-select" value={theme} onChange={e => onTheme(e.target.value as Theme)}>{(Object.keys(themeNames) as Theme[]).map(value => <option key={value} value={value}>{themeNames[value]}</option>)}</select></div>
+      {pwa?.canInstall && <Button className="all-profiles" onClick={() => { setSwitchOpen(false); pwa.install() }}>安装私人书架</Button>}
       {onLogout && <Button className="logout-link" disabled={logoutBusy} onClick={() => { setSwitchOpen(false); onLogout() }}>{logoutBusy ? '正在退出…' : '退出登录'}</Button>}
     </SheetContent></Sheet>
   </header>

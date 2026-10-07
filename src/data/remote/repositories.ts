@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types.ts'
 import type { BookDraft } from '../../types/index.ts'
-import { DataAccessError, draftColumns, revision, uuid } from './contracts.ts'
+import { DataAccessError, draftColumns, revision, text, uuid } from './contracts.ts'
 import type { MutationResult, OriginalCover } from './contracts.ts'
 import { coverColumns } from './cover-path.ts'
 import { mapBook, mapProfile } from './mappers.ts'
@@ -33,6 +33,14 @@ export function createRepositories(client: SupabaseClient<Database>, householdId
       },
     },
     books: {
+      async listSuggestionFields(offset = 0, limit = 200) {
+        if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 200) throw new DataAccessError('invalid_page', '分页参数无效。')
+        const { data, error } = await client.from('books').select('title,author,translator')
+          .eq('household_id', householdId).is('deleted_at', null).order('id').range(offset, offset + limit - 1)
+        checkApiError(error)
+        const fields = (data || []).map(row => ({ title: text(row, 'title'), author: text(row, 'author'), translator: text(row, 'translator', true) }))
+        return { fields, nextOffset: fields.length === limit ? offset + limit : null }
+      },
       async listBooks(profileId: string, offset = 0, limit = 100) {
         uuid(profileId)
         if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 200) throw new DataAccessError('invalid_page', '分页参数无效。')

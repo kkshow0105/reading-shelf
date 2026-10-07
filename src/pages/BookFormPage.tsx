@@ -14,14 +14,18 @@ import { bookMessage } from '@/data/books/model'
 import { validateBrowserCover, localPreview, coverMessage } from '@/data/covers/files'
 import type { CoverChoice } from '@/data/covers/files'
 import type { CoverSource } from '@/data/covers/url-cache'
+import { SuggestionInput } from '@/components/SuggestionInput'
+import { emptySuggestions } from '@/lib/suggestions'
+import type { SuggestionIndex } from '@/lib/suggestions'
 interface BookFormProps {
   profile: Profile; book?: Book; recoveredDraft?: BookDraft; ownBooks: Book[];
   onNavigate: (path: string) => void; onSave: (draft: BookDraft, cover?: CoverChoice) => void | Promise<void>;
   onDraftChange: (draft: BookDraft | null, cover?: CoverChoice) => void;
   onObjectURL: (url: string) => void; coverEnabled?: boolean; remoteCovers?: boolean;
   recoveredCover?: CoverChoice; coverSource?: CoverSource; saveNotice?: string;
+  suggestions?: SuggestionIndex; suggestionsUnavailable?: boolean;
 }
-export function BookFormPage({ profile, book, recoveredDraft, recoveredCover, coverSource, saveNotice, remoteCovers = false, ownBooks, onNavigate, onSave, onDraftChange, onObjectURL, coverEnabled = true }: BookFormProps) {
+export function BookFormPage({ profile, book, recoveredDraft, recoveredCover, coverSource, saveNotice, remoteCovers = false, ownBooks, onNavigate, onSave, onDraftChange, onObjectURL, coverEnabled = true, suggestions = emptySuggestions(), suggestionsUnavailable = false }: BookFormProps) {
   const baseline = useRef(book ? toDraft(book) : blankDraft())
   const [draft, setDraft] = useState<BookDraft>(() => recoveredDraft || baseline.current)
   const [coverChoice, setCoverChoice] = useState<CoverChoice>(() => recoveredCover || { kind: 'keep' })
@@ -85,9 +89,10 @@ export function BookFormPage({ profile, book, recoveredDraft, recoveredCover, co
         }} disabled={!coverEnabled || checkingImage} /><Button variant="outline" disabled={!coverEnabled || checkingImage} onClick={() => fileRef.current?.click()}><Upload size={17} aria-hidden="true" />{checkingImage ? '正在读取图片…' : (draft.cover || selectedFile || coverSource && coverChoice.kind === 'keep') ? '更换封面' : '选择封面'}</Button>{coverEnabled && (draft.cover || selectedFile || coverSource && coverChoice.kind === 'keep') && <Button onClick={() => { if (remoteCovers) { setCoverChoice({ kind: 'remove' }); update('cropPosition', defaultCropPosition()) } else update('cover', '') }} aria-label="移除当前封面"><X size={16} aria-hidden="true" />移除封面</Button>}{coverEnabled ? <p>保留原图，书架居中显示。<br />JPEG、PNG、WebP，最多 10MB。</p> : <p>封面将在下一阶段启用。</p>}{imageError && <p className="field-error" role="alert">{imageError}</p>}</div>
       </aside>
       <div className="form-fields"><section className="form-section"><div className="form-section-heading"><span>01</span><h2>这本书</h2></div><p className="required-note">标有 * 的项目为必填</p>
-        <div className="field"><label htmlFor="title">书名 *</label><Input id="title" value={draft.title} maxLength={200} onChange={e => update('title', e.target.value)} {...fieldProps('title')} required />{errors.title && <p id="title-error" className="field-error">{errors.title}</p>}</div>
-        <div className="field"><label htmlFor="author">作者 *</label><Input id="author" value={draft.author} maxLength={200} onChange={e => update('author', e.target.value)} {...fieldProps('author')} required />{errors.author && <p id="author-error" className="field-error">{errors.author}</p>}</div>
-        <div className="field"><label htmlFor="translator">译者 <span className="optional">可选</span></label><Input id="translator" value={draft.translator} maxLength={200} onChange={e => update('translator', e.target.value)} /></div>
+        {suggestionsUnavailable && <p className="suggestion-notice">历史建议暂时不可用，仍可正常填写。</p>}
+        <div className="field"><label htmlFor="title">书名 *</label><SuggestionInput id="title" value={draft.title} values={suggestions.title} maxLength={200} onValue={value => update('title', value)} {...fieldProps('title')} required />{errors.title && <p id="title-error" className="field-error">{errors.title}</p>}</div>
+        <div className="field"><label htmlFor="author">作者 *</label><SuggestionInput id="author" value={draft.author} values={suggestions.author} maxLength={200} onValue={value => update('author', value)} {...fieldProps('author')} required />{errors.author && <p id="author-error" className="field-error">{errors.author}</p>}</div>
+        <div className="field"><label htmlFor="translator">译者 <span className="optional">可选</span></label><SuggestionInput id="translator" value={draft.translator} values={suggestions.translator} maxLength={200} onValue={value => update('translator', value)} /></div>
       </section><section className="form-section"><div className="form-section-heading"><span>02</span><h2>阅读记录</h2></div>
         <div className="field"><label htmlFor="status">阅读状态</label><select id="status" className="input native-select" value={draft.status} onChange={e => { const next = e.target.value as ReadingStatus; if (draft.finishedOn && (next === '在读' || next === '暂停')) setStateChange(next); else update('status', next) }}>{statuses.map(status => <option key={status}>{status}</option>)}</select></div>
         {showDates && <div className="date-fields"><div className="field"><label htmlFor="startedOn">开始日期 <span className="optional">可选</span></label><Input id="startedOn" type="date" max={today} value={draft.startedOn} onInput={e => update('startedOn', e.currentTarget.value)} {...fieldProps('startedOn')} />{errors.startedOn && <p id="startedOn-error" className="field-error">{errors.startedOn}</p>}</div>{(draft.status === '读完' || draft.status === '弃读' || draft.finishedOn) && <div className="field"><label htmlFor="finishedOn">{draft.status === '弃读' ? '终止日期' : '完成日期'} <span className="optional">可选</span></label><Input id="finishedOn" type="date" max={today} value={draft.finishedOn} onInput={e => update('finishedOn', e.currentTarget.value)} {...fieldProps('finishedOn')} />{errors.finishedOn && <p id="finishedOn-error" className="field-error">{errors.finishedOn}</p>}</div>}</div>}

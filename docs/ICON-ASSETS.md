@@ -1,5 +1,9 @@
 # Reading Shelf · B2 正式图标资源
 
+**5B正式验收 · 2026-10-07：** 冻结的普通图标/Apple/favicon字节未变，HTML已接入。新增maskable-512/192为同一B2完整构图机械缩小并加外围背景；512内图288、偏移112，192内图108、偏移42，整个内图均落在半径40%的中心安全圆内，像素复核通过。manifest普通图标仅any、专用版本仅maskable；iPhone正式安装/主屏幕体验已通过，Android未冒充真机验收。模拟预览位于ignored qa/pwa-maskable-preview.png；可用scripts/export-maskable-icons.py --check复核。当前状态见[5B](PWA-5B.md)。
+
+下面保留2026-10-06的图标归档基线；其中“当前没有接入/后续接入”的表述指归档当时，现阶段以上述5B checkpoint为准。
+
 定稿：2026-10-06，用户确认 B2 为正式图标基线（左侧木书架、右侧阅读坐榻、通往坐榻前沿的木梯、暖吊灯、下层少量绿植、深森林绿背景）。只沿用最初九宫格左下方案，不采用其余八个方向。上层没有盆栽阻挡休息区，无文字、复古印章或额外装饰。
 
 本次完成图标资源与接入建议，不启用 PWA，不创建运行中的 manifest / Service Worker，不改变书架视觉、页面色彩 tokens、Auth、Books、Storage 或数据库。index.html 仍使用原有 /bookmark.svg，下面的接入片段供后续明确授权时使用。

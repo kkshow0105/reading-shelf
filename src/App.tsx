@@ -12,6 +12,7 @@ import { BooksWorkspace } from './components/BooksWorkspace'
 import { Button } from './components/ui/button'
 import { useMediaQuery } from './lib/useMediaQuery'
 import type { Theme } from './types'
+import { PwaProvider, usePwa, usePwaUpdateGuard } from './pwa/PwaProvider'
 
 function AccessStatus({ message, retry }: { message?: string; retry?: () => void }) {
   return <main id="main-content" className="access-status page-shell" tabIndex={-1}>
@@ -60,9 +61,15 @@ function HouseholdArea({ theme, onTheme, drafts }: { theme: Theme; onTheme: (the
   </>
 }
 function AuthenticatedApp() {
+  const pwa = usePwa()
   const { state, error, retry, login } = useAuth()
   const [theme, setTheme] = useState<Theme>('system')
   const [drafts] = useState(() => new ReadingDrafts())
+  const sessionUsers = useRef(new Set<string>())
+  if (state.user) sessionUsers.current.add(state.user.id)
+  // Auth expiry can unmount BooksWorkspace while its draft remains in memory.
+  // Preserve refresh confirmation on the login page as well.
+  usePwaUpdateGuard(() => [...sessionUsers.current].some(id => drafts.hasUser(id)) ? 'confirm' : 'safe')
   const dark = useMediaQuery('(prefers-color-scheme: dark)')
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme === 'system' ? dark ? 'dark' : 'light' : theme
@@ -77,8 +84,8 @@ function AuthenticatedApp() {
       <Header profiles={[]} theme={theme} onTheme={setTheme} onNavigate={() => {}} />
       {state.status === 'loading' ? <AccessStatus message={error ?? undefined} retry={retry} /> : <LoginPage onLogin={login} />}
     </>}
-    <footer className="site-footer page-shell"><span>READING SHELF</span><span>各自的书单，共同的书房。</span></footer>
+    <footer className="site-footer page-shell"><span>READING SHELF</span><span>各自的书单，共同的书房。</span>{pwa?.canInstall && <Button className="pwa-install-link" onClick={pwa.install}>安装私人书架</Button>}</footer>
   </>
 }
 // The separate PrototypeApp is not imported: production Profiles and Books are real.
-export default function App() { return <AuthProvider><AuthenticatedApp /></AuthProvider> }
+export default function App() { return <PwaProvider><AuthProvider><AuthenticatedApp /></AuthProvider></PwaProvider> }

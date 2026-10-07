@@ -29,7 +29,19 @@ export function selectBooks(books: Book[], profileId: string, query: string, fil
   }
   return result.sort((a, b) => {
     let order = 0
-    if (sort === 'title') order = collator.compare(a.title, b.title)
+    if (sort === 'recent') {
+      const group = { 在读: 0, 读完: 1, 暂停: 2, 弃读: 2, 想读: 3 }
+      order = group[a.status] - group[b.status]
+      if (!order) {
+        if (a.status === '在读' && b.status === '在读') {
+          order = Number(!!b.startedOn) - Number(!!a.startedOn) || b.startedOn.localeCompare(a.startedOn)
+        } else if (a.status === '读完' && b.status === '读完') {
+          order = Date.parse(b.finishedOn || b.createdAt) - Date.parse(a.finishedOn || a.createdAt)
+        }
+        order ||= b.createdAt.localeCompare(a.createdAt)
+      }
+    }
+    else if (sort === 'title') order = collator.compare(a.title, b.title)
     else if (sort === 'added') order = b.createdAt.localeCompare(a.createdAt)
     else if (sort === 'rating') order = (b.rating ?? -1) - (a.rating ?? -1) || byDate(a, b)
     else order = byDate(a, b, sort === 'earliest') || (sort === 'earliest' ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt))

@@ -24,6 +24,8 @@ import type { CoverSource } from '../data/covers/url-cache'
 import { CoverDisplayContext } from '../data/covers/display'
 import { createBookCoverMutations } from '../data/covers/mutations'
 import type { CoverChoice } from '../data/covers/files'
+import { isPwaReloadApproved, usePwaUpdateGuard } from '../pwa/PwaProvider'
+import { useHouseholdSuggestions } from '../data/books/useSuggestions'
 
 function coverSource(record: StoredBook | null): CoverSource | undefined {
   return record?.originalCover ? { path: record.originalCover.path, scope: { householdId: record.householdId, profileId: record.book.profileId, bookId: record.book.id } } : undefined
@@ -62,6 +64,7 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
   const [toast, setToast] = useState<Toast | null>(null), [toastPaused, setToastPaused] = useState(false), [undoBusy, setUndoBusy] = useState(false)
   const undoGate = useRef(false)
   const continueRef = useRef<HTMLButtonElement>(null)
+  usePwaUpdateGuard(() => mutation.current.busy || logoutBusy || undoGate.current ? 'busy' : dirty.current || drafts.hasUser(userId) ? 'confirm' : 'safe')
   const remember = () => {
     const old = current.current.route
     if (old.page === 'shelf') setViews(previous => ({ ...previous, [old.profileId]: { ...previous[old.profileId], scroll: window.scrollY } }))
@@ -90,6 +93,8 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
       } else { remember(); setPath(next) }
     }
     const unloading = (event: BeforeUnloadEvent) => {
+      // Only after the PWA's explicit discard confirmation and activation.
+      if (isPwaReloadApproved()) return
       if (dirty.current || mutation.current.busy || drafts.hasUser(userId)) { event.preventDefault(); event.returnValue = '' }
     }
     window.addEventListener('hashchange', changed); window.addEventListener('beforeunload', unloading)
@@ -145,6 +150,7 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
   const service = useMemo(() => createBooksService(createRepositories(getSupabaseClient(), householdId).books, householdId, profile.id), [householdId, profile.id])
   const coverMutations = useMemo(() => createBookCoverMutations(createRepositories(getSupabaseClient(), householdId).books, createCoverService(getSupabaseClient()), householdId, profile.id), [householdId, profile.id])
   const books = useBooks(service, onFailure)
+  const suggestions = useHouseholdSuggestions(householdId, route.page === 'new' ? 'new' : route.page === 'edit' ? `edit:${route.bookId}` : '', onFailure)
   const live = useRef(false), requests = useRef(new RequestSequence())
   const [detail, setDetail] = useState<{ id: string; record: StoredBook | null; loading: boolean; error: string | null }>({ id: '', record: null, loading: true, error: null })
   const [detailAttempt, setDetailAttempt] = useState(0), [formVersion, setFormVersion] = useState(0)
@@ -225,7 +231,7 @@ function ProfileBooks({ userId, householdId, profile, route, view, density, onDe
   else if (route.page === 'backup') page = <Suspense fallback={<main id="main-content" className="access-status page-shell" tabIndex={-1}><p role="status">正在打开备份页…</p></main>}><BackupPage householdId={householdId} userId={userId} profileId={profile.id} onNavigate={onNavigate} mutate={mutate} /></Suspense>
   else if (route.page !== 'new' && (detail.id !== bookId || detail.loading)) page = <main id="main-content" className="access-status page-shell" tabIndex={-1}><div className="quiet-loading" aria-hidden="true" /><p role="status">正在翻开这本书…</p></main>
   else if (route.page !== 'new' && (detail.error || !detail.record)) page = <main id="main-content" className="page-shell empty-state" tabIndex={-1}><h1>{detail.error ? '这本书暂时无法载入。' : '这本书暂时无法打开。'}</h1>{detail.error && <p role="alert">{detail.error}</p>}<div className="empty-actions"><Button onClick={() => onNavigate(`/p/${profile.id}/shelf`)}>返回书架</Button>{detail.error && <Button variant="outline" onClick={() => setDetailAttempt(value => value + 1)}>重试</Button>}</div></main>
-  else if (route.page === 'new' || route.page === 'edit') page = <BookFormPage key={`${draftKey}:${formVersion}`} profile={profile} book={route.page === 'edit' ? baseline!.book : undefined} recoveredDraft={recovered?.draft} recoveredCover={recovered?.coverChoice} saveNotice={recovered?.notice} coverSource={coverSource(baseline)} remoteCovers ownBooks={books.records.map(item => item.book)} onNavigate={onNavigate} onSave={save} onDraftChange={trackDraft} onObjectURL={() => {}} coverEnabled />
+  else if (route.page === 'new' || route.page === 'edit') page = <BookFormPage key={`${draftKey}:${formVersion}`} profile={profile} book={route.page === 'edit' ? baseline!.book : undefined} recoveredDraft={recovered?.draft} recoveredCover={recovered?.coverChoice} saveNotice={recovered?.notice} coverSource={coverSource(baseline)} remoteCovers ownBooks={books.records.map(item => item.book)} suggestions={suggestions.index} suggestionsUnavailable={suggestions.unavailable} onNavigate={onNavigate} onSave={save} onDraftChange={trackDraft} onObjectURL={() => {}} coverEnabled />
   else page = <DetailPage key={detail.record!.updatedAt} profile={profile} book={detail.record!.book} coverSource={coverSource(detail.record)} onNavigate={onNavigate} onDelete={remove} onReload={() => setDetailAttempt(value => value + 1)} />
   return <>{page}<Dialog open={conflict !== null} onOpenChange={open => { if (!open && !reloading) setConflict(null) }}><DialogContent><DialogTitle className="overlay-title">这本书已在另一台设备被修改。</DialogTitle><DialogDescription className="overlay-description">当前输入仍然保留。重新载入最新内容会放弃这次尚未保存的修改；也可以取消，继续保留输入。</DialogDescription>{conflict?.error && <p className="field-error" role="alert">{conflict.error}</p>}<div className="dialog-actions"><Button variant="outline" disabled={reloading} onClick={() => setConflict(null)}>取消</Button><Button variant="primary" disabled={reloading || busy} onClick={async () => {
     if (!conflict) return; setReloading(true)

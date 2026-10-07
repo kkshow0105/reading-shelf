@@ -310,3 +310,78 @@ build通过：主JS637.07kB/gzip188.16kB（4B-3为634.87/187.27）；backup页32
 正式Books版本/删除状态/封面引用及Storage路径/创建更新时间/metadata的组合SHA-256仍为ddadc27ab712a0954cd0e4ffdb2215360c40cd5fa145dd9860693121017230d7，与5A开始及自动恢复清理后的基线完全相同。指纹是元数据/版本检查，未读取用户原图像素或正式下载ZIP；当前正式两本记录和三张原件完整保留，Profiles无写入。
 
 git diff --check通过，所有已跟踪文本及待提交新增文件的secret literal扫描0；没有备份ZIP / JSON / CSV、qa/、真实env或凭据被Git跟踪。现有五个已跟踪JSON为components.json、package.json、package-lock.json、tsconfig.json、public/fonts/SOURCE.json，均为配置/公开字体来源记录，不是备份。新增十个文件均是5A代码、测试、脚本与说明，无临时或无关改动。独立提交信息为feat: add complete backup and restore；不amend、不push，提交后以最终git status确认clean。
+
+
+## 5B · 中断后恢复 checkpoint（2026-10-07）
+
+保留上轮全部修改，只补确定性检查与文档，不重新执行5B，不启动浏览器验收。未执行reset/checkout/clean/restore/amend/commit/push；尚待iPhone HTTPS正式人工验收。实现/缓存边界/更新流程/部署注意事项见[PWA-5B](PWA-5B.md)。
+
+| 检查 | 结果与范围 |
+|---|---|
+| production build / TypeScript | 本轮通过；生成manifest.webmanifest、sw.js、workbox-778a14ff.js；17项静态precache |
+| 全部unit/service tests | 本轮80/80，原66+PWA14，无失败/跳过 |
+| 构建集成 | 本轮manifest字段、PNG尺寸/解码、HTML链接、precache白名单与文件revision、SW/Workbox输出通过 |
+| B2 / maskable / ICO | 原图和所有冻结普通资源字节未变；专用512/192像素与机械等比导出一致，整个内图在中心安全圆内；ICO16/32/48帧可读 |
+| 真实SW lifecycle | 上轮A→B真实waiting→确认→controllerchange→reload通过；本轮复核保留记录，不重跑；B、visits2、controllerChanges2、单一registration、waiting none、违规缓存0 |
+| 网络边界 | 上轮匿名Auth/Books/Profiles401及非法Storage测试URL400，网络计数前进、无API缓存；不等于正式登录/正式封面/备份生产验收 |
+| 390×844 / 1366×768 | 上轮更新提示/手机确认无横向溢出；部分截图文件像素与CSS viewport不一致，不伪称全部图片恰为指定尺寸 |
+| 手机旧页面 | 上轮已登录dev页档案/三列书架/详情/真实封面/添加/编辑只读无溢出；备份页仅看到加载占位，尚未完成 |
+| 键盘 / focus | 上轮Enter打开确认、默认继续操作焦点、Escape后最终恢复页面；最终返回焦点补充未复验，待人工 |
+| 200% | 上轮快捷键未改变字体/DPR/视口，工具限制；本轮不重试 |
+| 待补项 | 1920×1080、安装说明/实际安装、standalone安全区、生产Auth重开/封面/备份下载、正式iPhone更新 |
+| 数据与依赖 | 本轮不访问Supabase，不写正式数据；数据模块及migration未改，原包版本未变；没有再安装依赖 |
+| 遗留进程 | 5173/5174/4173/5185均不监听，未发现对应Node dev/preview/QA/test进程；Edge/Codex/其他runtime不关闭 |
+
+当前主JS644.56kB/gzip190.53、backup32.14/gzip10.93、CSS38.13/gzip8.59；保留既有chunk>500kB提示。PWA closeBundle约17.6秒的耗时提示不代表失败。本轮build与tests均已结束，未因UI工具问题修改业务代码。
+
+最终secret literal/session扫描覆盖118个源码/文档/配置/构建文本文件，0命中，不输出任何凭据；真实env/qa/测试备份均未进入跟踪或候选文件。git diff --check通过，仅有既有CSS换行规范提示；依赖锁审查确认原包版本未变，Supabase及src/data无diff。本checkpoint仍未提交；用户已确认尚未部署，需另行确定HTTPS托管后本人验收图标、standalone、安全区、Session关闭重开与真实更新，之后才允许最终Git收尾。不进入Offline/IndexedDB/Sync。
+
+
+## 5B · Version A HTTPS部署（2026-10-07）
+
+固定origin：https://reading-shelf-ten.vercel.app/，独立Vercel reading-shelf项目，production READY。未连接Git，未commit/push/amend，未发布Version B。本人已完成Vercel官方登录；scope明确，已有Sleep Sounds等项目无操作。
+
+本地production build再次通过，部署为Build Output API v3静态文件（26个/约2.7MB），无源码/env/CLI认证/历史demo封面上传；原项目文件未删除。仅配置两项允许的前端production变量，未回显值；CLI自动附加的OIDC变量已从本地应用env精确移除。无Supabase/migration/RLS/正式记录操作。
+
+无认证HTTPS检查：首页/manifest/SW/Workbox/全部正式运行图标均200、MIME正确、文件字节与上传产物相同；HTML/SW/manifest需重新验证，hash资源immutable，静态请求不被rewrite吞掉。production alias可直接访问登录页，无Vercel额外登录层。HTTP报告在ignored qa/vercel-version-a-http.json。
+
+浏览器实际登录页/刷新/hash档案入口检查正常，未显示私人数据，控制台无应用warn/error；未登录正式账号。匿名Auth health200、Books/Profiles401、非法测试Storage URL400，CORS允许生产origin，不暴露正式数据；该网络检查不是正式登录态或封面/备份功能验收。
+
+SW脚本交付与本地已测产物一致，scope配置为/且runtime数据缓存为空。浏览器工具不暴露navigator.serviceWorker，只读检查一次失败后停止，不修改正常应用规避。生产registered/controlling真实状态尚未自动确认，明确待iPhone验收，不伪称200响应等于注册成功。
+
+等待用户用固定URL本人登录、Safari添加主屏幕，检查B2图标/名称、standalone、safe-area、Session关闭重开、书架/详情/编辑/备份。回复“Version A真机验收完成”后才准备同origin B；A/B全部人工完成后再最终提交。
+
+
+## Version B · 功能与更新候选（2026-10-07）
+
+用户已确认A iPhone真机正常。B本地build/TS和全部92项测试通过；排序完整五状态/缺失日期/id稳定并列及原其他排序，联想trim/去重/软删/中文/英文/优先级/八项上限/只读HH投影/分页取消均覆盖。
+
+390×844、1366×768实际页面的书架、自然详情/编辑、大图、Add/Edit建议、独立填入、键盘、外部关闭、草稿保护已验证无横向溢出；手机三列、PC六列、首页2:3/cover/cropPosition保留。大图同一signed URL、contain、滚动锁、关闭/Esc/焦点返回通过。iOS完整字体效果、真机触摸与软键盘待人工；不把Windows计算字体冒充iPhone。滚动/动画截图有接口绘制伪影，真实DOM Header top0、候选bottom509.78<768，未改正常CSS规避。
+
+新5186隔离HTTP的真实A→B waiting/确认/激活/单次刷新通过，A保持输入直到确认，B visits2，单一注册、缓存17/违规0；两尺寸更新提示无溢出。生产手机是否发现B只能在部署后由本人确认，不使用Safari刷新代替安装版A的真实更新。
+
+前后正式Books/Profiles/Household/Storage元数据指纹完全相同，数量12/2/1/13；没有正式写入/测试账号/Storage对象，所有测试输入仅会话草稿并已清除。secret扫描0命中、数据schema/Auth/Storage/Backup实现无修改。等待同origin部署及B人工验收，未提交。详情与证据见[PWA-5B](PWA-5B.md)。
+
+
+## Version B部署结果（2026-10-07）
+
+production READY：dpl_85sSdLPoLVNBfF7gm3gVRsoUGuUD，固定origin仍为https://reading-shelf-ten.vercel.app/。只上传审查后的静态产物，旧A hash资产保留以支持未刷新的窗口；无源码/env/认证文件/正式数据/历史demo封面/QA探针上传。未改其他Vercel项目、未连接Git。无登录HTTPS复核HTML、manifest、新SW、Workbox及图标均200且MIME/字节正确；旧A BackupPage chunk仍可取。证据qa/vercel-version-b-http.json。
+
+本地真实SW已经发现B并验证waiting/单次更新；生产新SW可访问，但工具不能读取用户iPhone registration，不能声称手机已经发现B。继续用已安装的A等待提示，不用Safari刷新替代更新；原60分钟检查节流保留。等待本人PWA更新+B功能验收后才最终Git收尾，当前不commit/push/amend。
+
+
+## 5B正式人工验收与最终收尾（2026-10-07）
+
+用户本人明确确认5B PWA正式真机验收通过：A→B正常，不自动刷新；出现提示后主动更新，只刷新一次且无循环；Auth Session保持，完全关闭重开正常。最近阅读状态分组、iPhone中文字体统一、自然比例详情封面、首页2:3保持、大图、新增/编辑三字段家庭历史联想均通过。本次独立5B正式提交一并包含已验收的五项Version B修正。
+
+人工确认后重新运行production build/TS、全部92项unit/service tests，均通过；新的5190隔离origin重新执行真实生产A→最终B SW集成：A visits1/controlling，B waiting installed，未提交测试输入保留；明确确认后B visits2/controllerChanges2、单一注册、waiting none、缓存17/违规0。记录在ignored qa/5b-final-sw-waiting.json/result.json；没有重发线上版本或登录正式账户。
+
+manifest/普通any图标/专用maskable/Apple180/MIME引用、17项静态precache/revision、message-only skipWaiting及prompt策略重新检查通过。maskable完整B2方形处于安全圆内，像素导出一致。无Auth/REST/realtime/Storage/signed URL/备份Blob运行时缓存；dev SW禁用。最终build与已部署B字节一致，主JS650.48kB/gzip192.47、CSS39.79/gzip8.88、backup32.14/gzip10.93、静态缓存1025.80KiB，仅既有>500kB提示，无新依赖。
+
+上一轮自动B开发检查前后为Books12/Storage13且指纹f8e172...一致；正式人工验收完成后的本轮开始已为Books13/Storage14，变化发生在两次自动检查之间，不将其归因于自动测试，也不删除/回退现状。本轮开始/结束Household1、Profiles2、Books13、Storage14的完整元数据SHA均为8010651514757df4176dbeaa3105366cf6697a1a846cde3c5040f619b12bf107。本轮仅SELECT复核，没有正式写入、临时Auth/记录/封面、恢复或清理。指纹核对版本/删除/引用及对象metadata，不假称重新读取了全部原图像素。
+
+图标冻结、HTML/部署配置、PWA更新保护、Version B改进、测试及必要文档归入独立提交feat: add installable reading shelf PWA；不amend、不push。Git最终hash与clean状态由最终回复/历史给出；真实env、Vercel本机关联/预构建、qa截图/结果与任何凭据不入Git。最终secret/diff审查结果记录于完成检查后。
+
+正式真机验收来自用户确认；历史200%/Android/截图工具限制不伪称已补测。本轮没有阅读进度、封面性能优化、thumbnail、Offline、IndexedDB或Sync；完成后停止。
+
+最终预提交secret literal/session扫描覆盖124个源码/文档/配置/build文本，0命中；真实env、.vercel、qa及备份不入Git。diff --check通过（仅CSS换行规范提示），全部候选为已验收5B/Version B范围，未见无关/删除改动；原依赖版本未变。独立提交后以Git历史与最终回复确认hash及working tree clean。

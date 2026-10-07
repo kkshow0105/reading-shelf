@@ -1,12 +1,14 @@
 # 私人书架 / Reading Shelf
 
-第三阶段书籍视觉已冻结；4B-2真实Books、4B-3 private Storage封面均已通过正式人工验收。原始图片完整保留，替换不覆盖旧图。5A 完整ZIP、JSON / CSV与空书房恢复已实现及自动验证，三种正式下载均已通过用户人工验收；未执行正式恢复，PWA / Offline尚未实现。
+第三阶段整体视觉保持；4B-2/4B-3及5A正式验收完成，未执行正式恢复。5B PWA的iPhone正式验收通过，A→B主动确认更新/单次刷新/Session保持及关闭重开正常；Version B排序、iOS字体、自然封面、大图与家庭输入建议一并验收通过。[稳定HTTPS地址](https://reading-shelf-ten.vercel.app/)不变；Offline未实现。
 
-第三阶段规范与独立历史原型继续保留，正式入口不导入mock；PWA与离线仍是后续目标。
+第三阶段规范与独立历史原型继续保留，正式入口不导入mock。5B交付/验证/历史工具限制见[PWA记录](docs/PWA-5B.md)，最终独立提交包含已验收的Version B改进；完成后停止，不推进离线。
 
 ## 运行与检查
 
-5A：“切换阅读档案”菜单 / 手机 Sheet → 数据与备份。完整 ZIP 包括全部家庭原图与软删除历史；JSON 不含原图，CSV 只作表格。恢复只支持另一个空书房，当前正式书房不可恢复。使用 fflate 0.8.3（MIT，按需加载），没有 PWA / IndexedDB / 自动备份。格式、100 MiB边界、技术时间策略、同会话重试限制和灾难恢复流程见 [5A](docs/SUPABASE-5A.md)。
+5B：生产build生成manifest/SW，dev不注册SW。更新由用户点击确认后切换，静态shell预缓存不包含Supabase或封面/备份数据，断网不保证数据功能。B2图标已接入，专用maskable只做安全区缩放。iPhone正式体验必须在HTTPS站点人工验收，不能用本地模拟代替。
+
+5A：“切换阅读档案”菜单 / 手机 Sheet → 数据与备份。完整 ZIP 包括全部家庭原图与软删除历史；JSON 不含原图，CSV 只作表格。恢复只支持另一个空书房，当前正式书房不可恢复。使用 fflate 0.8.3（MIT，按需加载），没有 IndexedDB / 自动备份。格式、100 MiB边界、技术时间策略、同会话重试限制和灾难恢复流程见 [5A](docs/SUPABASE-5A.md)。
 
 真实隔离恢复测试（需要已授权的 CLI 登录，绝不在其他项目执行）：`node --experimental-strip-types scripts/verify-backup-remote.mjs`。脚本先核验唯一 project ref，使用临时 Auth / Household，导出及恢复用普通 SDK，最后精确清理自己的 UUID / Storage 路径，复核正式指纹。不要把用户下载文件放入仓库。
 
