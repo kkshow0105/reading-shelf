@@ -505,3 +505,23 @@ V2正式origin候选发布READY：dpl_J14KFaRdQgJ6f4xar3xC7idhg8wv，https://rea
 截图为真实运行 App / BooksWorkspace 和页面组件，使用本地隔离合成书目及项目现有 public/covers 原创 SVG 测试封面，不是正式账号书架或出版社封面，也不是设计效果图。正式入口仍不挂载 mock；只有 ignored QA 服务替换数据 / Auth 服务与图片响应，所有外部请求、正式远端写入为 0。首轮 QA 书目曾使用错误的 want-to-read 枚举，已只在 fixture 中纠正并重验；未改业务 mapper。120 本用来检查长页状态，首屏展示不同既有测试封面。最终四张截图均单独核对 PNG 尺寸，文件位于 ignored qa/theme-stage2/shelf-{warm,night}-{390x844,1366x768}.png；另有 tablet / 1920、表单截图及 browser-result.json、baseline.css / hashes、fixture / capture 脚本，不纳入 Git。
 
 限制：未使用正式登录会话，Windows WebKit 不等于 iPhone 真机；真实 Safari 滚动性能、安装版启动 / 安全区、200% 系统文字 / VoiceOver 仍待用户验收。按用户保护范围未改主题机制，夜航 meta theme-color 仍为阶段 1 的 #211F1B，manifest 静态启动色仍 #F4F0E8，系统栏 / 启动画面可能与新背景有色差。既有 SDK 极端存储异常边界不属于本轮修复。测试服务 / 浏览器已关闭，没有安装依赖、stage / commit / push / 部署。阶段 2 完成后停止，等待视觉验收，不进入阶段 3。
+
+## 双主题阶段 2 提交与阶段 3A 公共玻璃（2026-10-09，3A 未提交 / 未部署）
+
+用户已初步视觉验收阶段 2 并授权单独提交。核对五个候选及暖纸 / 受保护文件后，重新执行104项测试和生产 build / TypeScript，通过；明确暂存 AGENTS.md、DESIGN.md、README.md、docs/QA.md、src/styles.css，独立提交 0cfdf1655abb9db10b30b7f640d3c76ed7cab9e3，说明 feat: add nocturne theme palette and background。提交后仅原有未跟踪参考目录留在工作区，不推送 / 部署。上述阶段 2 未提交 checkpoint 属历史。
+
+3A 以该提交为基线，只在夜航作用域新增 glass 变量和公共材质样式：site-header、shelf-tools、menu-content、popover-content。14px blur / 115% saturate，≤1024px 为10px；搜索框轻填色 / 细顶部高光与必要底边，共用顶栏模糊，不给搜索或输入另加滤镜。body Portal 的菜单 / Popover 不在触发工具组的模糊树内；保持原 z-index、字体、padding、边框宽、控件尺寸、布局、圆角体系和点击方式。工具组边界以 inset 阴影绘制，不增加border宽度。半透明背景有保守底色，叠加4%顶部 sheen、9%一像素顶部高光与18%浅短外影，无发光边缘、持续动画、纹理或全屏模糊。
+
+回退为 #16243A 实色，只有标准或 WebKit 背景滤镜属性支持时使用顶栏82% / 面板86%透明色。玻璃最不利纯白背景叠加sheen后，辅助文字对比度约4.67 / 4.63，搜索必要底边约3.43 / 3.40，满足既有文字 / 控件要求；不将文字本身设半透明。香槟金沿用既有少量选中 / 主按钮，不增加全金导航。书籍封面 / 书目文字没有新增blur、opacity或外框。
+
+本轮没有修改业务组件、请求、认证、封面加载 / 签名缓存、Shelf keep-alive、搜索 / 筛选 / 排序逻辑、草稿、主题持久化、备份或 PWA。既有阶段2 CSS 前缀除新增根 DESIGN.md 扫描排除外保持原字节；Dialog / Sheet / Toast / 表单 / suggestion-list 的规则与变量不改。手机档案与筛选仍为普通Sheet，本轮有截图证实其未玻璃化；这些内容留给3B。
+
+104/104 tests、TypeScript / production build 和既有 verify-reading-ui 通过；主要JS仅既有>500kB提示。root DESIGN.md 的3A属性说明曾误触发 Tailwind backdrop-filter 工具类，因此只补充 @source not ../DESIGN.md，保留 ../docs 排除以及 src / index.html 正常扫描；产物检查只有两条预期的标准 / WebKit 声明，均属于夜航公共选择器，无 .backdrop-filter 工具规则，9个原有源码工具类仍在。CSS约42.60kB；manifest / 图标 /17静态precache及更新机制保持。
+
+Windows 已有WebKit在390×844、1366×768、1920×1080、768×1024检查通过：暖纸计算字体 / 颜色 / 尺寸与提交基线一致，主题双向切换 / 刷新恢复、原Shelf / img / Detail / Form节点、900px滚动（隔离真实React setter）、搜索 / 筛选 / 排序 / 密度 / 草稿 / blob预览保持；数据读取与签名调用不随切换增加，封面filter=none、opacity=1，无横向溢出，错误 / danger及表单仍为原色。
+
+另在两尺寸两主题逐项检查公共面板尺寸 / 字体 / padding / 边宽、Portal脱离顶栏与工具组、层级、Esc / 取消 / 外部点击关闭、选择排序、主题菜单键盘Enter / Escape及焦点返回 / focus ring、跳转主要内容通过。手机Sheet在已有160ms淡入结束后与基线计算样式完全一致（测试初次捕获了不同动画帧，修正等待后重验，没有改动画）。CSSOM模拟移除玻璃支持块后，顶栏和菜单回到不透明实色且无滤镜，检查通过。Windows WebKit的截图并未呈现与Chromium相同的实际模糊；用本机已安装Chromium再次交叉检查全部公共控件、关闭 / 焦点 / 回退与两尺寸截图，通过并确认背景模糊实际绘制。该差异不以未验收业务补丁规避，也不宣称Windows WebKit已证明iPhone真实效果。
+
+验收截图来自真实App及本地合成记录 / 原创测试封面，不是正式账号、出版社图片或设计模拟图。路径为 ignored qa/theme-stage3a/chromium/{night,warm}-{shelf,search,profiles,filters,sort}-{390x844,1366x768}.png，另有night-fallback-sort；WebKit对照与四尺寸状态结果位于父目录。所有外部请求、正式写入为0；QA注入setter仅在本地隔离Vite transform中，正式源码 / 构建不含它。手机profile/filter截图有意保留原Sheet。旧QA资料 / StyleKit原件均保留，不进入Git。
+
+未验收：iPhone实际材质 / 滚动性能、原生软键盘、安全区、200%系统文字 / VoiceOver和正式PWA更新 / 重启。本轮未改启动 / theme-color配置，旧色差边界继续存在；既有SDK极端存储限制不修复。3A仅本地候选，不stage / commit / push / 部署，不开始3B。测试浏览器及服务器已关闭，等待用户视觉验收。

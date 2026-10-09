@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @source not "../docs";
+@source not "../DESIGN.md";
 
 @font-face { font-family: "Noto Serif SC"; font-style: normal; font-weight: 400; font-display: swap; src: local("Noto Serif SC"), url("/fonts/noto-serif-sc-400.woff2") format("woff2"); }
 @font-face { font-family: "Noto Serif SC"; font-style: normal; font-weight: 600; font-display: swap; src: local("Noto Serif SC SemiBold"), url("/fonts/noto-serif-sc-600.woff2") format("woff2"); }
@@ -479,3 +480,48 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .progress-number .input { width: 84px; }
 .progress-clear { color: var(--text-secondary); padding-left: 0; }
 .progress-help { color: var(--text-secondary); font-size: 14px; }
+
+/* Night public controls only. Search shares the header's one blur layer;
+   Radix menus/popovers are body portals, never blurred inside their triggers. */
+:root[data-theme="dark"] {
+  --glass-fallback: #16243A;
+  --glass-header: rgb(11 19 34 / 82%);
+  --glass-panel: rgb(19 31 49 / 86%);
+  --glass-control: rgb(209 225 246 / 4%);
+  --glass-hover: rgb(209 225 246 / 8%);
+  --glass-border: rgb(174 194 220 / 20%);
+  --glass-control-border: #8B9AB0;
+  --glass-highlight: rgb(224 237 255 / 9%);
+  --glass-sheen: linear-gradient(to bottom, rgb(209 225 246 / 4%), transparent 56%);
+  --glass-shadow: 0 4px 14px rgb(4 9 18 / 18%), inset 0 1px 0 var(--glass-highlight);
+  --glass-blur: 14px;
+  --glass-saturate: 115%;
+}
+:root[data-theme="dark"] :is(.site-header, .shelf-tools, .menu-content, .popover-content) {
+  background-color: var(--glass-fallback);
+  background-image: var(--glass-sheen);
+  box-shadow: var(--glass-shadow);
+}
+:root[data-theme="dark"] :is(.site-header, .menu-content, .popover-content) { border-color: var(--glass-border); }
+:root[data-theme="dark"] .shelf-tools {
+  border-radius: var(--radius-control);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-border);
+}
+:root[data-theme="dark"] .site-header .search-box {
+  background: var(--glass-control);
+  border-color: var(--glass-control-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+:root[data-theme="dark"] .shelf-tools .button-quiet:hover,
+:root[data-theme="dark"] .menu-item[data-highlighted] { background: var(--glass-hover); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme="dark"] :is(.site-header, .shelf-tools, .menu-content, .popover-content) {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  :root[data-theme="dark"] .site-header { background-color: var(--glass-header); }
+  :root[data-theme="dark"] :is(.shelf-tools, .menu-content, .popover-content) { background-color: var(--glass-panel); }
+}
+@media (max-width: 1024px) {
+  :root[data-theme="dark"] { --glass-blur: 10px; }
+}
