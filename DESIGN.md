@@ -25,21 +25,21 @@
 
 所有未来组件使用语义 token，不在页面中另写一套品牌色。以下是固定设计值；任何主色改动须获用户明确要求并同步本文件。
 
-双主题阶段 0＋1：Light 列是默认“暖纸书房”的冻结基线；Dark 列仅作为可选“夜航玻璃”的临时外观，不代表后续正式配色。暖纸现有布局、字体、字号、间距、颜色、圆角、动画与交互均保持不变。
+双主题阶段 0＋1 已验收。Light 列为默认“暖纸书房”的冻结基线；Dark 列为阶段 2“夜航玻璃 / Nocturne Glass”的正式基础配色，本轮仍无毛玻璃材质。暖纸现有布局、字体、字号、间距、颜色、圆角、动画与交互均保持不变。
 
-| Token | Light：白天纸页 | Dark：夜间书房 | 用途 |
+| Token | Light：暖纸书房（冻结） | Dark：夜航玻璃 | 用途 |
 |---|---|---|---|
-| color.paper | #F4F0E8 | #211F1B | 全局底色，深色不用纯黑 |
-| color.surface | #FAF7F1 | #2B2823 | 输入区域 / 弹层 / 菜单，不作为每本书的卡片底 |
-| color.surface-muted | #EAE3D7 | #353128 | 选中行、封面占位、静态 skeleton |
-| color.text | #24211D | #EEE7DC | 书名、正文与主要控制文字 |
-| color.text-secondary | #686157 | #BBB1A3 | 作者、译者、日期、提示；仍需可读 |
-| color.accent | #753C39 | #D2A5A0 | 主操作、小面积选中、已填星级、需要注意的提示 |
-| color.on-accent | #FAF7F1 | #211F1B | 强调色实心按钮上的文字 |
-| color.rule | #D8CFC1 | #494239 | 纯装饰分隔线；不能独自表示输入边界或控件状态 |
-| color.control-border | #857B6E | #887E70 | 必需的控件轮廓与空星描边 |
-| color.focus | #24211D | #EEE7DC | 键盘焦点外环，与控件留 3px 间距 |
-| color.error / color.danger | 同 color.accent | 同 color.accent | 用文字与符号表达错误 / 删除，不再引入鲜红 |
+| color.paper | #F4F0E8 | #0B1322 | 全局底色，深色不用纯黑 |
+| color.surface | #FAF7F1 | #152237 | 输入区域 / 弹层 / 菜单，不作为每本书的卡片底 |
+| color.surface-muted | #EAE3D7 | #213047 | 选中行、封面占位、静态 skeleton |
+| color.text | #24211D | #E5EBF3 | 书名、正文与主要控制文字 |
+| color.text-secondary | #686157 | #A7B4C8 | 作者、译者、日期、提示；仍需可读 |
+| color.accent | #753C39 | #D4B77F | 主操作、小面积选中、已填星级、需要注意的提示 |
+| color.on-accent | #FAF7F1 | #152031 | 强调色实心按钮上的文字 |
+| color.rule | #D8CFC1 | #2C3A4F | 纯装饰分隔线；不能独自表示输入边界或控件状态 |
+| color.control-border | #857B6E | #718198 | 必需的控件轮廓与空星描边 |
+| color.focus | #24211D | #D6DFEB | 键盘焦点外环，与控件留 3px 间距 |
+| color.error / color.danger | 同 color.accent | #E1A6A3 | 用文字与符号表达错误 / 删除；夜航与金色强调独立 |
 
 正常使用场景中，强调色可见面积目标低于 5%（封面本身不计）；一屏一个主要实心操作，其他操作用文字、细线或单色图标。状态不是彩虹 badge：“想读 / 在读 / 读完 / 暂停 / 弃读”是文字，必要时配同色简单符号。
 
@@ -51,12 +51,12 @@
 
 | 前景 / 背景 | Light | Dark |
 |---|---|---|
-| text / paper | 14.10:1 | 13.40:1 |
-| text-secondary / paper | 5.38:1 | 7.78:1 |
-| text-secondary / surface-muted（最不利普通底色） | 4.79:1 | 6.12:1 |
-| accent / paper | 7.51:1 | 7.54:1 |
-| on-accent / accent | 7.98:1 | 7.54:1 |
-| control-border / surface-muted | 3.26:1 | 3.25:1 |
+| text / paper | 14.10:1 | 15.49:1 |
+| text-secondary / paper | 5.38:1 | 8.85:1 |
+| text-secondary / surface-muted（最不利普通底色） | 4.79:1 | 6.34:1 |
+| accent / paper | 7.51:1 | 9.62:1 |
+| on-accent / accent | 7.98:1 | 8.48:1 |
+| control-border / surface-muted | 3.26:1 | 3.35:1 |
 
 普通文字（包括次级文字与 placeholder）至少 4.5:1；大号文字与必要控件图形至少 3:1。不得将次级普通文字放宽到 3:1。数值显示时四舍五入，判定使用原始值。[W3C 文字对比度说明](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
 
@@ -66,9 +66,9 @@
 
 两套主题共用组件、业务逻辑和数据；主题属于设备，不属于档案，不同步 Supabase。切换不重挂载页面，不改变登录会话、档案、滚动、搜索 / 筛选 / 排序、密度、详情、草稿、图片预览和封面缓存。手机仍默认三列，封面保持原色及清晰度，不新增每本书的玻璃卡片。
 
-暖纸继续禁止玻璃拟态及整页渐变。夜航后续允许受控 Glassmorphism、深墨蓝底色与柔和静态径向光斑，禁止风景背景、霓虹、密集玻璃卡片、过强发光边框和夸张动画。StyleKit 七份原件仅供参考，不直接导入、覆盖 CSS / Tailwind 配置。本轮不增加光斑、高光、阴影、backdrop-filter 或控件视觉改造，只使用旧 dark 颜色变量。
+暖纸继续禁止玻璃拟态及整页渐变。夜航阶段 2 仅在 :root[data-theme="dark"] 内定义基础色彩与两层低透明度蓝色径向光斑；根画布使用不重复的静态背景，不加固定背景层、额外 DOM、伪元素、滤镜或动画，不改变布局 / 安全区。光斑使用 #7C9CC4 的 10%→4%→透明和 #33517A 的 12%→4%→透明，分别为 720×560px 与 800×620px 的椭圆半径，扩散过渡到 74% / 78%。书籍封面原色、比例和显示方式不变。夜航 warning #D5BA83 / success #9FC6B0 仅预留语义变量，不为现有中性提示强加色彩；危险按钮只作颜色适配，其他几何保持。毛玻璃、高光、边缘发光 / 阴影及组件材质留给阶段 3。StyleKit 原件不导入，Tailwind 的 ../docs 扫描排除保持。
 
-浏览器 theme-color 暖纸沿用 #F4F0E8，夜航临时沿用 #211F1B。PWA manifest 静态颜色、图标、启动相关配置与 Service Worker 更新策略保持；系统启动画面不保证与用户动态主题一致，须在真机验收中明确区分。
+阶段 2 不改主题机制或 PWA：浏览器 theme-color 暖纸仍 #F4F0E8，夜航仍为阶段 1 的 #211F1B，可能与新背景略有色差。manifest 静态颜色、图标、启动配置与 Service Worker 更新策略保持；系统启动画面不保证匹配动态主题，真机验收需明确区分。
 
 ## 3. 字体与中文排版
 
@@ -390,7 +390,7 @@ Dialog / Sheet 等查询返回 radix-ui 等运行依赖，Command / Calendar / S
 
 以下视觉与布局在本项目中明确否决：
 
-下列玻璃拟态、整页光效及圆角限制继续完整适用于暖纸；夜航仅按第 2 节的受控范围允许玻璃材质，其他禁止项仍有效。本轮阶段 0＋1 不启用该视觉例外。
+下列玻璃拟态、整页光效及圆角限制继续完整适用于暖纸；夜航仅按第 2 节的受控范围允许玻璃材质，其他禁止项仍有效。阶段 2 仅启用第 2 节的基础色彩与静态背景，毛玻璃留待阶段 3。
 
 - 紫蓝渐变、glow、霓虹、玻璃拟态、无意义 gradient orb、网格科技背景、赛博科技风。
 - Bento Grid、dashboard stat cards、到处圆角矩形卡片、每个 section 都放一个 Card。

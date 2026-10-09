@@ -489,3 +489,19 @@ V2正式origin候选发布READY：dpl_J14KFaRdQgJ6f4xar3xC7idhg8wv，https://rea
 本节先更新再进行完整生产构建，避免重复遗漏文档追加后的产物检查。提交检查包括：全部 npm test、build 内的 TypeScript 检查、verify-reading-ui 封面集成；检查产物不存在文档误触发规则，并用原始 Tailwind 编译器比较 src / index.html 候选生成的工具规则在修复前后均保留；本机已有 WebKit 的双主题 / 首屏 / 持久化 / 原 DOM / 草稿 / 封面检查及暖纸计算样式对比。所有浏览器数据只为本地隔离 fixture，正式 Supabase、原图及 PWA 更新架构不操作。
 
 本轮 CSS 检查结果保存于 ignored qa/theme-scan-result.json；浏览器结果仍在 qa/theme-stage1-browser-result.json。上述检查全部通过且候选路径审查一致后，只暂存明确的 14 个阶段文件，采用 feat: add persistent dual-theme switching；StyleKit 七份未跟踪原件与 ignored qa / dist 不纳入提交。真机、PWA 重启、全局存储 SDK 极端故障等原有限制继续保留。
+
+## 双主题阶段 2 · 夜航基础色彩与静态背景（2026-10-09，未提交 / 未部署）
+
+用户已验收阶段 0＋1；本轮唯一 Git 基线为 78a013bb8e79e14b28a951f99c4baae07dbedec8。只修改 src/styles.css 的既有夜航选择器及夜航危险按钮颜色，必要说明同步 AGENTS / DESIGN / README；暖纸、其他 CSS 声明、字体 / 几何 / 动画 / 断点均与基线一致。主题持久化、index.html、Auth / 数据层、BooksWorkspace、Shelf keep-alive、原图 / 签名缓存、备份、PWA / SW、manifest、依赖与参考原件均不变。
+
+夜航基础值：paper #0B1322、surface #152237、surface-muted #213047、主文字 #E5EBF3、辅助文字 #A7B4C8、香槟金 #D4B77F、on-accent #152031、分割线 #2C3A4F、控件边界 #718198、focus #D6DFEB；danger #E1A6A3 独立于强调色，warning #D5BA83 / success #9FC6B0 仅预留变量，不新增状态显示逻辑。最亮基础表面上的主 / 辅助文字对比度 11.09 / 6.34，控件边界 3.35；强调按钮文字 8.48。径向叠加的颜色通道保守上界低于 surface-muted，普通文字不因光斑失去可读性。
+
+背景直接由夜航根画布的两层静态 radial-gradient 绘制，不重复，不设置 fixed / 额外 DOM / 伪元素，不改变尺寸或交互。#7C9CC4 用 10% / 4% / 透明渐变，椭圆半径 720 / 560px，中心 85% / 96px；#33517A 用 12% / 4% / 透明，半径 800 / 620px，中心 8% / 560px。无背景图片、噪点、粒子、滤镜、动画、玻璃高光或发光阴影；现有封面投影的几何和数值保留。顶栏与浮层仍为实色表面，玻璃材质不进入本轮。
+
+104/104 tests、build 内 TypeScript / production build、现有 verify-reading-ui 全部通过。产物 CSS 40.88 kB，无 backdrop-filter 声明或误生成工具类；../docs 扫描排除保持，17 项静态 precache，manifest 与图标引用保持。构建只有既有 >500 kB 主 JS 提示。静态 CSS AST 比对剔除夜航规则后与基线完全相同；其他受保护文件以本轮基线 SHA 检查。
+
+已有 Windows WebKit 真渲染通过 390×844 / 1366×768 / 1920×1080 / 768×1024：暖纸 calculated 颜色 / 字体 / 尺寸与 Git 基线相同；两主题分别 3 / 6 / 7 / 4 列，无横向溢出；手机舒展两列、双向主题切换 / 刷新恢复、新窗口模拟、首屏初始化及主题存储异常通过。Shelf / img / Detail / Form DOM 身份、搜索、筛选、排序、详情地址、返回原 Shelf、不重播淡入、未保存短评与同一 blob 预览保持，主题切换不新增数据读取 / 签名调用；隔离触发真实 React setter 时 scrollY=900 保持。封面 filter=none、opacity=1。原菜单开关的焦点滚动现象仍记录，不以新业务补丁规避。
+
+截图为真实运行 App / BooksWorkspace 和页面组件，使用本地隔离合成书目及项目现有 public/covers 原创 SVG 测试封面，不是正式账号书架或出版社封面，也不是设计效果图。正式入口仍不挂载 mock；只有 ignored QA 服务替换数据 / Auth 服务与图片响应，所有外部请求、正式远端写入为 0。首轮 QA 书目曾使用错误的 want-to-read 枚举，已只在 fixture 中纠正并重验；未改业务 mapper。120 本用来检查长页状态，首屏展示不同既有测试封面。最终四张截图均单独核对 PNG 尺寸，文件位于 ignored qa/theme-stage2/shelf-{warm,night}-{390x844,1366x768}.png；另有 tablet / 1920、表单截图及 browser-result.json、baseline.css / hashes、fixture / capture 脚本，不纳入 Git。
+
+限制：未使用正式登录会话，Windows WebKit 不等于 iPhone 真机；真实 Safari 滚动性能、安装版启动 / 安全区、200% 系统文字 / VoiceOver 仍待用户验收。按用户保护范围未改主题机制，夜航 meta theme-color 仍为阶段 1 的 #211F1B，manifest 静态启动色仍 #F4F0E8，系统栏 / 启动画面可能与新背景有色差。既有 SDK 极端存储异常边界不属于本轮修复。测试服务 / 浏览器已关闭，没有安装依赖、stage / commit / push / 部署。阶段 2 完成后停止，等待视觉验收，不进入阶段 3。

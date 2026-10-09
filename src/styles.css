@@ -25,11 +25,18 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --paper: #211F1B; --surface: #2B2823; --surface-muted: #353128;
-  --text-primary: #EEE7DC; --text-secondary: #BBB1A3; --accent: #D2A5A0;
-  --on-accent: #211F1B; --border: #494239; --control-border: #887E70;
-  --scrim: rgb(15 14 12 / 56%); --shadow-cover: 0 2px 8px rgb(15 14 12 / 8%); --shadow-cover-hover: 0 4px 8px rgb(15 14 12 / 11%);
+  --paper: #0B1322; --surface: #152237; --surface-muted: #213047;
+  --text-primary: #E5EBF3; --text-secondary: #A7B4C8; --accent: #D4B77F;
+  --on-accent: #152031; --border: #2C3A4F; --control-border: #718198;
+  --danger: #E1A6A3; --warning: #D5BA83; --success: #9FC6B0; --focus: #D6DFEB;
+  --scrim: rgb(5 11 22 / 60%); --shadow-cover: 0 2px 8px rgb(15 14 12 / 8%); --shadow-cover-hover: 0 4px 8px rgb(15 14 12 / 11%);
+  /* Static canvas paint only: no fixed layer, filter, texture or animation. */
+  background-image:
+    radial-gradient(ellipse 720px 560px at 85% 96px, rgb(124 156 196 / 10%), rgb(124 156 196 / 4%) 38%, transparent 74%),
+    radial-gradient(ellipse 800px 620px at 8% 560px, rgb(51 81 122 / 12%), rgb(51 81 122 / 4%) 42%, transparent 78%);
+  background-repeat: no-repeat;
 }
+:root[data-theme="dark"] .button-danger { background: var(--danger); color: var(--on-accent); }
 /* The bundled Noto files are finite subsets. Apple touch devices use complete
    system Chinese families for the whole text run, rather than per-glyph fallback. */
 :root[data-apple-touch="true"] {
