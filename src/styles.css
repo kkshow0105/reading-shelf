@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source not "../docs";
 
 @font-face { font-family: "Noto Serif SC"; font-style: normal; font-weight: 400; font-display: swap; src: local("Noto Serif SC"), url("/fonts/noto-serif-sc-400.woff2") format("woff2"); }
 @font-face { font-family: "Noto Serif SC"; font-style: normal; font-weight: 600; font-display: swap; src: local("Noto Serif SC SemiBold"), url("/fonts/noto-serif-sc-600.woff2") format("woff2"); }
@@ -34,9 +35,6 @@
 :root[data-apple-touch="true"] {
   --font-serif: "Songti SC", "STSong", ui-serif, serif;
   --font-sans: "PingFang SC", -apple-system, system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) { --paper: #211F1B; --text-primary: #EEE7DC; color-scheme: dark; }
 }
 @theme inline {
   --color-background: var(--paper); --color-foreground: var(--text-primary);

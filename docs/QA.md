@@ -465,3 +465,27 @@ V2正式origin候选发布READY：dpl_J14KFaRdQgJ6f4xar3xC7idhg8wv，https://rea
 人工确认后重新build/TypeScript和全部98/98 tests通过。导出脚本--check验证1254源图SHA、1024母版、512/192/Apple180/favicon32逐像素同母版LANCZOS、ICO16/32/48三帧和maskable512/192全部通过；安全圆/circle/rounded-square/大圆角不裁内图。manifest除icons外与5C-1一致，HTML三个图标link无旧B2，17静态precache仅七个V2运行图标（源图/1024不缓存），用户主动更新策略、runtimeCaching空及Supabase/Storage边界未改。仅既有大chunk/closeBundle耗时提示。
 
 当前代码和图片与已部署且本人验收的候选一致，本轮只更新必要验收文档；所有src/数据库/依赖和B2历史资源hash未变。130个候选/build文本secret扫描0、diff --check通过，真实env、qa、.vercel、测试备份不入Git。此次独立提交采用feat: replace reading shelf app icons，不amend；用户已授权将5C-1及图标从现有main正常推送，但开始检查发现仓库无任何remote/upstream，已请求明确现有仓库地址，不猜目标或force push。实际commit/push/clean结果由Git历史与最终回复核对。
+
+## 双主题阶段 0＋1（2026-10-09，未提交 / 未部署）
+
+基线 main / 2051e05aa19e83e749b268a77a3744dd39670333，已跟踪文件无改动，仅 docs/design-references/ 未跟踪。暖纸浅色变量、字体、几何、动画和控件样式冻结；夜航临时复用旧 dark 变量。外观仅暖纸 / 夜航，首次默认暖纸，不再跟随系统。HTML 头部同步读取 reading-shelf.theme、设置 data-theme / theme-color，React 接续该结果，选择仅本机 localStorage 保存，读写异常由主题代码捕获。
+
+104/104 tests 通过（原 98＋主题 6），TypeScript / production build 和现有 verify-reading-ui 首次渲染集成通过。53 个受保护文件 SHA-256 与基线一致，包含认证、封面 / 签名缓存、BooksWorkspace / ShelfDetailView、备份、PWA、数据库、依赖锁和七份设计参考原件。CSS 精确比对只删除系统主题 fallback，并新增参考目录扫描排除；Tailwind 4 默认会扫描参考 MD 中的类名，排除后首次构建 CSS 40.55 kB，无 backdrop-filter 声明。该结果发生在追加本节 QA 文字之前；追加后再次构建产生文档工具类，原因及修复见下节。manifest 静态纸色 / 图标和 17 项静态预缓存边界保持，不更改 SW 更新策略。
+
+使用本机已有 WebKit，在隔离 Vite 服务中运行真实 App / BooksWorkspace / 页面，认证和数据库均为本地合成 fixture，外部请求为 0、远端写入为 0，没有正式账号 / 数据操作。390×844、1366×768、1920×1080、768×1024 首次系统深色仍暖纸，分别 3 / 6 / 7 / 4 列，无横向溢出；暖纸实际 computed 字体 / 颜色 / 尺寸与改动前 CSS 比对相同。菜单 / 手机 select 均只有两个选项，双向切换 / 刷新、本机 storageState 模拟重新打开、无效值、主题键读取失败、storage getter 拒绝及写入失败均通过；无未捕获页面错误。生产 HTML 在模块 / 样式执行前读取夜航偏好通过。
+
+切换前后 Shelf / img / Detail / Form 的 DOM 身份保持，数据读取及签名计数无增加；搜索、已应用筛选、排序、手机舒展两列、详情地址、返回原 Shelf、不重播淡入、未保存短评和同一 blob 图片预览保持。仅隔离 QA 的 Vite transform 暴露现有 React setter，排除菜单焦点影响后暖纸↔夜航均保持 scrollY=900；未改正式源码或构建注入诊断。WebKit / 工具对 sticky 菜单、Sheet 开关的焦点有滚动影响，选中相同暖纸也出现；未为测试改动既有交互，真实手机完整菜单流程仍需复验。
+
+边界：Windows WebKit / storageState 模拟不是 iPhone 真机或真实 PWA 重启验收；200% 文字、完整键盘 / VoiceOver、真实 Session 和动态状态栏尚未复验。manifest 静态背景仍 #F4F0E8，夜航启动画面可能先显示该颜色。存储无法保存时仅当前会话有效。极端模拟全部 getItem 抛错但 setItem 正常时，既有 Supabase SDK locks 模块的 debug 标记读取发生导入异常；主题 bootstrap / helper 自身全读取异常测试通过，未修改认证或升级 SDK，不声称该极端全局故障下整个应用已通过。
+
+基线 hash、fixture、测试脚本、JSON 结果及截图仅保存在 ignored qa/theme-stage1-*；原有 QA 与设计参考原件不覆盖。测试服务和浏览器已关闭。未安装依赖、未新建分支、未 stage / commit / push / 部署；完成后等待用户验收，不进入阶段 2。
+
+## 双主题阶段 0＋1 · 文档扫描修复与提交检查（2026-10-09）
+
+用户本轮仅授权修复并独立提交阶段 0＋1，不开始阶段 2，不推送或部署。旧 checkpoint 的未提交状态为历史；最终提交哈希及验证结果以 Git 和本轮完成回复为准。
+
+根因由已安装的 Tailwind Oxide Scanner 实际确认：单独扫描 docs/QA.md 包含 backdrop-filter 候选，扫描 src 的 TS / TSX 和根 index.html 不包含；旧构建 CSS 含 .backdrop-filter 工具规则，实际组件没有使用它。styles.css 将 @source not 从 ../docs/design-references 扩大为 ../docs（相对 src/styles.css），保留自动源码扫描、根 HTML 和全部现有视觉声明。没有删除或改写参考原件，没有修改业务组件。
+
+本节先更新再进行完整生产构建，避免重复遗漏文档追加后的产物检查。提交检查包括：全部 npm test、build 内的 TypeScript 检查、verify-reading-ui 封面集成；检查产物不存在文档误触发规则，并用原始 Tailwind 编译器比较 src / index.html 候选生成的工具规则在修复前后均保留；本机已有 WebKit 的双主题 / 首屏 / 持久化 / 原 DOM / 草稿 / 封面检查及暖纸计算样式对比。所有浏览器数据只为本地隔离 fixture，正式 Supabase、原图及 PWA 更新架构不操作。
+
+本轮 CSS 检查结果保存于 ignored qa/theme-scan-result.json；浏览器结果仍在 qa/theme-stage1-browser-result.json。上述检查全部通过且候选路径审查一致后，只暂存明确的 14 个阶段文件，采用 feat: add persistent dual-theme switching；StyleKit 七份未跟踪原件与 ignored qa / dist 不纳入提交。真机、PWA 重启、全局存储 SDK 极端故障等原有限制继续保留。

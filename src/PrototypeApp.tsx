@@ -11,7 +11,7 @@ import { DetailPage } from './pages/DetailPage'
 import { BookFormPage } from './pages/BookFormPage'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './components/ui/dialog'
 import { Button } from './components/ui/button'
-import { useMediaQuery } from './lib/useMediaQuery'
+import { initialTheme, applyTheme } from './lib/theme'
 import type { MobileShelfDensity } from './components/DisplayDensityMenu'
 
 const getPath = () => window.location.hash.slice(1) || '/profiles'
@@ -30,9 +30,8 @@ export default function PrototypeApp() {
   const [books, setBooks] = useState<Book[]>(() => createMockBooks().filter(book => fixture !== 'empty' || book.profileId !== 'chen'))
   const [path, setPath] = useState(getPath)
   const route = parseRoute(path)
-  const [theme, setTheme] = useState<Theme>('system')
+  const [theme, setTheme] = useState<Theme>(initialTheme)
   const [mobileDensity, setMobileDensity] = useState<MobileShelfDensity>('compact')
-  const systemDark = useMediaQuery('(prefers-color-scheme: dark)')
   const [views, setViews] = useState<Record<string, ShelfView>>(() => Object.fromEntries(profiles.map(p => [p.id, { query: '', filters: emptyFilters(), sort: 'recent', scroll: 0 }])))
   const scrolls = useRef<Record<string, number>>({})
   const [drafts, setDrafts] = useState<Record<string, BookDraft>>({})
@@ -68,10 +67,7 @@ export default function PrototypeApp() {
     window.addEventListener('hashchange', onHash); window.addEventListener('beforeunload', beforeUnload)
     return () => { window.removeEventListener('hashchange', onHash); window.removeEventListener('beforeunload', beforeUnload) }
   }, [])
-  useLayoutEffect(() => {
-    document.documentElement.dataset.theme = theme === 'system' ? systemDark ? 'dark' : 'light' : theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#211F1B' : '#F4F0E8')
-  }, [theme, systemDark])
+  useLayoutEffect(() => { applyTheme(theme) }, [theme])
   useLayoutEffect(() => {
     window.scrollTo({ top: route.page === 'shelf' ? scrolls.current[route.profileId] || 0 : 0, behavior: 'instant' })
     dirty.current = null

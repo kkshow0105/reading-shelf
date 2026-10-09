@@ -10,7 +10,7 @@ import { HouseholdBootstrapPage } from './pages/HouseholdBootstrapPage'
 import { Header } from './components/Header'
 import { BooksWorkspace } from './components/BooksWorkspace'
 import { Button } from './components/ui/button'
-import { useMediaQuery } from './lib/useMediaQuery'
+import { initialTheme, applyTheme } from './lib/theme'
 import type { Theme } from './types'
 import { PwaProvider, usePwa, usePwaUpdateGuard } from './pwa/PwaProvider'
 
@@ -63,18 +63,14 @@ function HouseholdArea({ theme, onTheme, drafts }: { theme: Theme; onTheme: (the
 function AuthenticatedApp() {
   const pwa = usePwa()
   const { state, error, retry, login } = useAuth()
-  const [theme, setTheme] = useState<Theme>('system')
+  const [theme, setTheme] = useState<Theme>(initialTheme)
   const [drafts] = useState(() => new ReadingDrafts())
   const sessionUsers = useRef(new Set<string>())
   if (state.user) sessionUsers.current.add(state.user.id)
   // Auth expiry can unmount BooksWorkspace while its draft remains in memory.
   // Preserve refresh confirmation on the login page as well.
   usePwaUpdateGuard(() => [...sessionUsers.current].some(id => drafts.hasUser(id)) ? 'confirm' : 'safe')
-  const dark = useMediaQuery('(prefers-color-scheme: dark)')
-  useLayoutEffect(() => {
-    document.documentElement.dataset.theme = theme === 'system' ? dark ? 'dark' : 'light' : theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#211F1B' : '#F4F0E8')
-  }, [theme, dark])
+  useLayoutEffect(() => { applyTheme(theme) }, [theme])
   useEffect(() => {
     document.title = '私人书架 · Reading Shelf'
     if (state.status === 'unauthenticated') window.history.replaceState(null, '', `${window.location.pathname}#/login`)

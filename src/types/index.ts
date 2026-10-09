@@ -1,6 +1,6 @@
 export const statuses = ['想读', '在读', '读完', '暂停', '弃读'] as const
 export type ReadingStatus = (typeof statuses)[number]
-export type Theme = 'system' | 'light' | 'dark'
+export type Theme = 'light' | 'dark'
 export type SortOrder = 'recent' | 'earliest' | 'rating' | 'added' | 'title'
 export interface Profile { id: string; name: string; description: string }
 // Non-destructive display alignment: 0 = left/top, 0.5 = center, 1 = right/bottom.

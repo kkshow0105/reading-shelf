@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, X, ChevronDown, Moon, Sun, Monitor, Check, Plus } from 'lucide-react'
+import { Search, X, ChevronDown, Moon, Sun, Check, Plus } from 'lucide-react'
 import type { Profile, Theme } from '@/types'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -8,9 +8,9 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { usePwa } from '@/pwa/PwaProvider'
 
-const themeNames: Record<Theme, string> = { system: '跟随系统', light: '浅色', dark: '深色' }
+const themeNames: Record<Theme, string> = { light: '暖纸书房', dark: '夜航玻璃' }
 function ThemeMenu({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
-  const Icon = theme === 'system' ? Monitor : theme === 'dark' ? Moon : Sun
+  const Icon = theme === 'dark' ? Moon : Sun
   return <DropdownMenu><DropdownMenuTrigger asChild><Button className="icon-button" aria-label={`外观：${themeNames[theme]}`}><Icon size={18} aria-hidden="true" /></Button></DropdownMenuTrigger>
     <DropdownMenuContent align="end" aria-label="外观"><DropdownMenuRadioGroup value={theme} onValueChange={value => onTheme(value as Theme)}>
       {(Object.keys(themeNames) as Theme[]).map(value => <DropdownMenuRadioItem value={value} key={value}>{themeNames[value]}</DropdownMenuRadioItem>)}
