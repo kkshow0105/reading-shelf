@@ -525,3 +525,32 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 @media (max-width: 1024px) {
   :root[data-theme="dark"] { --glass-blur: 10px; }
 }
+
+/* Night modal surfaces share the public glass. The image lightbox stays clear,
+   and the long form / native fields never get their own blur layers. */
+:root[data-theme="dark"] {
+  --form-surface: #111C2E;
+  --form-control: #18283F;
+  --form-control-border: #8B9AB0;
+}
+:root[data-theme="dark"] :is(.dialog-content:not(.cover-lightbox), .sheet-content, .toast, .pwa-notice, .suggestion-list) {
+  background-color: var(--glass-fallback);
+  background-image: var(--glass-sheen);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+:root[data-theme="dark"] .suggestion-option:is(:hover, [aria-selected="true"]) { background: var(--glass-hover); }
+:root[data-theme="dark"] .form-fields { background: var(--form-surface); }
+:root[data-theme="dark"] .form-page .input {
+  background: var(--form-control);
+  border-color: var(--form-control-border);
+}
+:root[data-theme="dark"] .form-page .input[aria-invalid="true"] { border-color: var(--danger); }
+:root[data-theme="dark"] :is(.form-page, .dialog-content, .sheet-content) .button:disabled { opacity: .7; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme="dark"] :is(.dialog-content:not(.cover-lightbox), .sheet-content, .toast, .pwa-notice, .suggestion-list) {
+    background-color: var(--glass-panel);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+}

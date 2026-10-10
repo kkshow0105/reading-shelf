@@ -525,3 +525,23 @@ Windows 已有WebKit在390×844、1366×768、1920×1080、768×1024检查通过
 验收截图来自真实App及本地合成记录 / 原创测试封面，不是正式账号、出版社图片或设计模拟图。路径为 ignored qa/theme-stage3a/chromium/{night,warm}-{shelf,search,profiles,filters,sort}-{390x844,1366x768}.png，另有night-fallback-sort；WebKit对照与四尺寸状态结果位于父目录。所有外部请求、正式写入为0；QA注入setter仅在本地隔离Vite transform中，正式源码 / 构建不含它。手机profile/filter截图有意保留原Sheet。旧QA资料 / StyleKit原件均保留，不进入Git。
 
 未验收：iPhone实际材质 / 滚动性能、原生软键盘、安全区、200%系统文字 / VoiceOver和正式PWA更新 / 重启。本轮未改启动 / theme-color配置，旧色差边界继续存在；既有SDK极端存储限制不修复。3A仅本地候选，不stage / commit / push / 部署，不开始3B。测试浏览器及服务器已关闭，等待用户视觉验收。
+
+## 阶段 3A 提交与阶段 3B 弹窗 / 表单候选（2026-10-10，3B 未提交 / 未部署）
+
+用户已视觉验收 3A 并授权独立提交。核查五个候选、旧CSS和164个受保护文件后，重新104/104 tests / TypeScript / production build通过；仅明确暂存 AGENTS.md、DESIGN.md、README.md、docs/QA.md、src/styles.css，提交 4886137508617331d4f07c0511dc9a7c3df98d04，说明 feat: add nocturne glass navigation and menus。参考原件、ignored截图与QA未入提交，无push / 部署。前文3A未提交记录属历史。
+
+3B复用已有glass变量，仅对夜航普通dialog-content（明确:not cover-lightbox，含AlertDialog）、sheet-content、toast、pwa-notice、suggestion-list使用统一材质。每个独立浮层14px、手机/tablet10px模糊，86%中性蓝灰背景、原有细高光/边界/轻阴影；不支持时回退 #16243A。遮罩继续用原scrim，无全屏模糊；长表单字段区域 #111C2E、输入 #18283F、边界 #8B9AB0 均不透明、不模糊，不增加padding、外框、字号、圆角或动画。错误边界仍为独立danger，危险确认背景 #E1A6A3；夜航禁用表单/弹层按钮为0.7透明度，禁用逻辑不变。大图容器背景透明、shadow/背景滤镜均none，原图filter=none；没有给封面附加材质。
+
+104/104 tests、build内TypeScript / production build和既有verify-reading-ui通过，无新依赖，仅既有大JS提示。CSS约43.81kB；产物中4条标准/WebKit声明全部在受控夜航选择器（3A一对、3B一对），无.backdrop-filter误生成工具类，9个原有源码工具类保留。保留../docs和根DESIGN.md扫描排除。3B是完整保留已提交CSS前缀后追加夜航规则，暖纸、3A公共材质和所有已有几何/断点声明不改；业务组件、Supabase/Auth、书籍逻辑、草稿/冲突、keep-alive、封面/签名缓存、主题持久化、备份、PWA更新源码、manifest与依赖锁均不变。
+
+本机既有Chromium运行真实App / BooksWorkspace / 表单 / Radix组件，390×844、1366×768、1920×1080、768×1024两主题均通过。暖纸普通/危险弹窗、Sheet、详情、表单和输入计算样式与3A基线一致；夜航几何/字体/padding/边宽/圆角一致且无横向溢出。默认危险焦点在保留按钮，Tab陷阱、Escape、焦点返回通过；AlertDialog外部点击不关闭，普通Dialog外部点击关闭，状态/日期确认只改本地草稿且保持其他内容。Sheet正常Esc/关闭/焦点恢复，弹窗开关不重建已保留Shelf/img。图片大图无玻璃，取消返回封面触发点；表单建议列表保持原键盘选项/关闭流程。
+
+保存模拟请求暂停时真实fieldset禁用且输入保留，503失败后表单仍在、错误持续、输入不丢；CAS零行响应触发真实冲突Dialog，取消后仍保留输入。原生Back/取消编辑触发真实草稿对话框，继续编辑后同一blob预览和短评保留；明确放弃才释放。真实服务/repository以本地内存数据模拟成功编辑、Toast、软删除120→119和撤销119→120通过，各浏览器context各5次内存写请求（失败/冲突/成功保存/删除/撤销）；正式远端写入和外部请求均为0。截图为真实运行组件及隔离书目/原创测试封面，不是正式账号或设计效果图。
+
+PWA视觉另用QA-only transform提供假的waiting worker，真实PwaProvider提示及更新前确认运行：两主题提示可读、无溢出，未保存草稿要求确认、默认继续当前操作，取消后输入保留；没有真实注册/激活/刷新或修改SW，不能把此视觉检查当完整生产SW生命周期验收。提示截图在同一QA目录。CSSOM移除背景滤镜支持块后，真实Sheet/Dialog回到实色且无模糊，通过；表单与输入本身从不叠加模糊。
+
+手机返回已实际对比：用3A原始CSS的独立baseline运行和3B运行，详情期间打开档案Sheet后执行浏览器Back，路由回Shelf但Sheet仍打开；原Shelf节点保持，关闭按钮可用。该现象在基线已存在，与本轮CSS无关，遵守不改交互逻辑的范围，没有修改导航。此项不能写成“原生返回自动关闭Sheet已通过”，应另行决定是否修复；真实iPhone返回/手势仍需本人确认。
+
+主验收截图在 ignored qa/theme-stage3b/{night,warm}-{add,edit,sheet,detail,dialog,danger}-{390x844,1366x768}.png（对应实际场景尺寸），另有toast/save-error/conflict/draft/fallback/pwa-notice及1920/tablet截图。12张主要PNG实际尺寸核对通过；modals-result.json、extended-result.json、baseline-back.json、css-audit.json及本地fixture/脚本保留同目录。大图源码/资源及StyleKit原件未更改。Windows WebKit实际模糊与Chromium的已知绘制差异保留，本轮不把桌面截图当iPhone验收。
+
+真机待验收：iPhone模糊性能、Sheet/长表单滚动、软键盘/日期选择、安全区、原生返回手势、系统文字放大/VoiceOver，以及正式PWA更新/重启。meta主题/manifest旧色差与SDK极端存储边界仍保留。本轮3B不stage/commit/push/部署，测试服务/浏览器已关闭；完成后停止等待视觉验收。
