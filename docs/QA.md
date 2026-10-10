@@ -545,3 +545,19 @@ PWA视觉另用QA-only transform提供假的waiting worker，真实PwaProvider�
 主验收截图在 ignored qa/theme-stage3b/{night,warm}-{add,edit,sheet,detail,dialog,danger}-{390x844,1366x768}.png（对应实际场景尺寸），另有toast/save-error/conflict/draft/fallback/pwa-notice及1920/tablet截图。12张主要PNG实际尺寸核对通过；modals-result.json、extended-result.json、baseline-back.json、css-audit.json及本地fixture/脚本保留同目录。大图源码/资源及StyleKit原件未更改。Windows WebKit实际模糊与Chromium的已知绘制差异保留，本轮不把桌面截图当iPhone验收。
 
 真机待验收：iPhone模糊性能、Sheet/长表单滚动、软键盘/日期选择、安全区、原生返回手势、系统文字放大/VoiceOver，以及正式PWA更新/重启。meta主题/manifest旧色差与SDK极端存储边界仍保留。本轮3B不stage/commit/push/部署，测试服务/浏览器已关闭；完成后停止等待视觉验收。
+
+## 阶段 3B 提交与阶段 4 全面回归（2026-10-10，预检记录未提交）
+
+用户初步视觉 / 自动化验收 3B 后授权提交。核查全部差异、冻结暖纸和164个受保护文件，104项测试、TypeScript / production build通过；只暂存 AGENTS.md、DESIGN.md、README.md、docs/QA.md、src/styles.css，提交 22ab7d2dd53575bc1d6decd438c9e459820312d8，说明 feat: complete nocturne glass dialogs and forms。参考原件与ignored截图未入提交；前文3B未提交记录属历史。
+
+阶段4只更新规范与回归记录，完整报告 / 复现 / 真机清单见 [THEME-REGRESSION-4](THEME-REGRESSION-4.md)。最终104/104测试、build内TypeScript和生产构建、既有verify-reading-ui通过，CSS43.81kB，17静态precache，只有既有大JS提示。暖纸公共CSS AST与原冻结2051e05一致，采样计算样式通过；4条预期夜航模糊声明，无文档误生成.backdrop-filter类，排除规则保持。所有应用源码、数据 / 认证、PWA、manifest、依赖与七份参考原件保持本轮基线哈希，没有业务补丁。
+
+现有Chromium / WebKit本地隔离实际App覆盖390×844、768×1024、1366×768、1920×1080两主题：常规登录 / 初始化、档案、书架 / 详情 / 返回、搜索筛选排序、表单 / 浮层 / Toast / 大图及备份可读、无横向溢出；原Shelf↔Detail keep-alive、主题渲染节点身份、900px滚动、草稿 / blob、封面原色与签名缓存保持。首次默认暖纸、系统模式无影响、持久化 / 冷上下文、无效值 / 主题键存储异常通过。官方SDK接本地Auth / REST / Storage适配器检查会话保持 / 刷新、失败重试、快速档案切换和旧响应隔离；实际新增原JPEG上传关联、编辑 / 503保存失败 / CAS冲突 / 删除撤销仅使用内存记录。所有外部请求和正式写入为0，不等于重验真实服务器RLS、远端会话续期或云端并发。
+
+隔离真实备份下载JSON / CSV / ZIP并恢复到另一空内存书房通过：2档案6记录含1软删除，7原图含1历史，恢复6条及6当前引用图，历史图仍在ZIP；非空目标禁止恢复。未读取正式下载或执行正式恢复。真实生产副本A→B的SW注册 / waiting / 明确确认 / 激活通过：无自动刷新，取消保留输入，确认只刷新一次、夜航保留，1注册 /17静态缓存且无API原图缓存；仅ignored诊断副本加计数，不改正式SW策略，主屏幕PWA待真机。
+
+记录三项既有问题，未自动修复：P1条件性存储异常（全局getItem抛错而写探测可用时，SDK locks模块顶层debug读取导致原生产bundle白屏；getter完全不可用对照可正常启动），P2详情开档案Sheet后浏览器Back返回书架仍开（3/3稳定、焦点仍在Sheet，可正常关闭，3A基线已存在），P2文字200%压力下手机日期越列 / tablet与PC固定54px书名框第二行截断（两主题一致、正常尺寸通过；这是临时CSS字体压力而非iPhone系统设置）。报告给出原因和最小后续方案，不改导航、SDK或冻结样式。
+
+本轮QA设施首轮有.ts别名解析、字段名 / DOM选择器和keep-alive范围假设错误，均只修正ignored测试脚本后重验，没有为通过测试修改业务代码。压力 / 对照截图与JSON结果在ignored qa/theme-stage4，真实运行组件使用合成记录 / 原创封面或本地JPEG，不是用户正式书架或设计模拟图。Windows WebKit绘制与Chromium差异、iPhone键盘 / 安全区 / 返回手势 / 模糊性能、系统文字 / VoiceOver、正式主屏幕安装 / 更新均未验收；manifest暖纸静态启动色与夜航运行时深棕theme-color色差仅提出建议，没有修改。
+
+常规流程可进入受控最终人工验收，但不能给出无条件正式发布结论；先决定已知问题的处理 / 接受范围，再完成真机清单。阶段4未提交、未推送 / 部署，测试服务和浏览器关闭，停止等待用户验收。
