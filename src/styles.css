@@ -32,10 +32,23 @@
   --danger: #E1A6A3; --warning: #D5BA83; --success: #9FC6B0; --focus: #D6DFEB;
   --scrim: rgb(5 11 22 / 60%); --shadow-cover: 0 2px 8px rgb(15 14 12 / 8%); --shadow-cover-hover: 0 4px 8px rgb(15 14 12 / 11%);
   /* Static canvas paint only: no fixed layer, filter, texture or animation. */
+  --canvas-glow-upper-size: 720px 560px;
+  --canvas-glow-upper-position: 85% 96px;
+  --canvas-glow-lower-size: 800px 620px;
+  --canvas-glow-lower-position: 8% 560px;
   background-image:
-    radial-gradient(ellipse 720px 560px at 85% 96px, rgb(124 156 196 / 10%), rgb(124 156 196 / 4%) 38%, transparent 74%),
-    radial-gradient(ellipse 800px 620px at 8% 560px, rgb(51 81 122 / 12%), rgb(51 81 122 / 4%) 42%, transparent 78%);
+    radial-gradient(ellipse var(--canvas-glow-upper-size) at var(--canvas-glow-upper-position), rgb(124 156 196 / 22%), rgb(124 156 196 / 8%) 38%, transparent 74%),
+    radial-gradient(ellipse var(--canvas-glow-lower-size) at var(--canvas-glow-lower-position), rgb(51 81 122 / 32%), rgb(51 81 122 / 10%) 42%, transparent 78%);
   background-repeat: no-repeat;
+}
+@media (max-width: 640px) {
+  :root[data-theme="dark"] {
+    /* Keep two distinct, soft pools on a narrow canvas rather than a flat wash. */
+    --canvas-glow-upper-size: 420px 360px;
+    --canvas-glow-upper-position: 92% 120px;
+    --canvas-glow-lower-size: 460px 420px;
+    --canvas-glow-lower-position: 0% 600px;
+  }
 }
 :root[data-theme="dark"] .button-danger { background: var(--danger); color: var(--on-accent); }
 /* The bundled Noto files are finite subsets. Apple touch devices use complete
