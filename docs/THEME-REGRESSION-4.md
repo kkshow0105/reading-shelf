@@ -2,6 +2,8 @@
 
 日期：2026-10-10。阶段 3B 提交：`22ab7d2dd53575bc1d6decd438c9e459820312d8`，说明 `feat: complete nocturne glass dialogs and forms`。
 
+后续：本报告已随阶段 4 文档独立提交 `cbec3bba32e2e4f71537ac06f9c70dd5dfaaa243`。下文保留当时未修复状态；阶段 4.5 的处理结果见 [THEME-FIXES-45](THEME-FIXES-45.md)。
+
 ## 范围与数据边界
 
 3B 提交前核查全部差异、暖纸 CSS 与受保护文件，仅提交 AGENTS.md、DESIGN.md、README.md、docs/QA.md、src/styles.css。StyleKit 七份原件和 ignored QA 截图未入提交。本轮没有 push / 部署，也没有修改业务源码、依赖、manifest 或 Service Worker。

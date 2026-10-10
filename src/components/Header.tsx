@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Search, X, ChevronDown, Moon, Sun, Check, Plus } from 'lucide-react'
 import type { Profile, Theme } from '@/types'
 import { Button } from './ui/button'
@@ -16,13 +16,23 @@ function ThemeMenu({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) =
       {(Object.keys(themeNames) as Theme[]).map(value => <DropdownMenuRadioItem value={value} key={value}>{themeNames[value]}</DropdownMenuRadioItem>)}
     </DropdownMenuRadioGroup></DropdownMenuContent></DropdownMenu>
 }
-export function Header({ profiles, profile, shelf = false, query = '', onQuery, theme, onTheme, onNavigate, onLogout, logoutBusy }: { profiles: Profile[]; profile?: Profile; shelf?: boolean; query?: string; onQuery?: (query: string) => void; theme: Theme; onTheme: (theme: Theme) => void; onNavigate: (path: string) => void; onLogout?: () => void; logoutBusy?: boolean }) {
+export function Header({ profiles, profile, shelf = false, query = '', onQuery, theme, onTheme, onNavigate, onLogout, logoutBusy, navigationPath }: { profiles: Profile[]; profile?: Profile; shelf?: boolean; query?: string; onQuery?: (query: string) => void; theme: Theme; onTheme: (theme: Theme) => void; onNavigate: (path: string) => void; onLogout?: () => void; logoutBusy?: boolean; navigationPath?: string }) {
   const compact = useMediaQuery('(max-width: 1024px)')
   const pwa = usePwa()
   const [switchOpen, setSwitchOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const profileRef = useRef<HTMLButtonElement>(null)
+  const previousPath = useRef(navigationPath)
+  const navigationClose = useRef(false)
+  const changeSwitchOpen = (open: boolean) => { if (open) navigationClose.current = false; setSwitchOpen(open) }
+  // React's committed path excludes navigation rejected by the draft/busy guard.
+  useLayoutEffect(() => {
+    if (previousPath.current === navigationPath) return
+    previousPath.current = navigationPath
+    navigationClose.current = true
+    setSwitchOpen(false)
+  }, [navigationPath])
   useEffect(() => { if (searchOpen) searchRef.current?.focus() }, [searchOpen])
   useEffect(() => setSearchOpen(false), [profile?.id, shelf])
   const chooseProfile = (id: string) => { setSwitchOpen(false); onNavigate(`/p/${id}/shelf`) }
@@ -38,11 +48,15 @@ export function Header({ profiles, profile, shelf = false, query = '', onQuery, 
         {shelf && !compact && <div className="search-box"><Search size={18} aria-hidden="true" /><Input aria-label="搜索书名、作者、译者" placeholder="搜索书名、作者、译者" value={query} onChange={e => onQuery?.(e.target.value)} />{query && <Button className="icon-button" aria-label="清除搜索" onClick={() => onQuery?.('')}><X size={16} aria-hidden="true" /></Button>}</div>}
         {shelf && compact && <Button className="icon-button" aria-label={searchOpen ? '收起搜索' : '搜索书架'} aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Search size={20} aria-hidden="true" /></Button>}
         {shelf && !compact && <Button variant="primary" onClick={() => onNavigate(`/p/${profile!.id}/new`)}><Plus size={17} aria-hidden="true" />添一本书</Button>}
-        {compact && profile ? <Button ref={profileRef} className="profile-mark" aria-label={`切换阅读档案，当前${profile.name}`} onClick={() => setSwitchOpen(true)}>{profile.name}<ChevronDown size={14} aria-hidden="true" /></Button> : <ThemeMenu theme={theme} onTheme={onTheme} />}
+        {compact && profile ? <Button ref={profileRef} className="profile-mark" aria-label={`切换阅读档案，当前${profile.name}`} onClick={() => changeSwitchOpen(true)}>{profile.name}<ChevronDown size={14} aria-hidden="true" /></Button> : <ThemeMenu theme={theme} onTheme={onTheme} />}
       </div>
     </div>
     {shelf && compact && searchOpen && <div className="mobile-search page-shell"><div className="search-box"><Search size={18} aria-hidden="true" /><Input ref={searchRef} aria-label="搜索书名、作者、译者" placeholder="搜索书名、作者、译者" value={query} onChange={e => onQuery?.(e.target.value)} />{query && <Button className="icon-button" aria-label="清除搜索" onClick={() => onQuery?.('')}><X size={16} aria-hidden="true" /></Button>}</div><Button onClick={() => setSearchOpen(false)}>收起</Button></div>}
-    <Sheet open={switchOpen} onOpenChange={setSwitchOpen}><SheetContent onCloseAutoFocus={event => { event.preventDefault(); profileRef.current?.focus() }}><SheetTitle className="overlay-title">换一间书房</SheetTitle><SheetDescription className="overlay-description">每个人，都有自己的阅读记忆。</SheetDescription>
+    <Sheet open={switchOpen} onOpenChange={changeSwitchOpen}><SheetContent onCloseAutoFocus={event => {
+      event.preventDefault()
+      if (navigationClose.current || !profileRef.current?.getClientRects().length) document.getElementById('main-content')?.focus({ preventScroll: true })
+      else profileRef.current.focus()
+    }}><SheetTitle className="overlay-title">换一间书房</SheetTitle><SheetDescription className="overlay-description">每个人，都有自己的阅读记忆。</SheetDescription>
       <div className="profile-choices">{profiles.map(p => <Button className="profile-choice" key={p.id} onClick={() => chooseProfile(p.id)}>{p.name}{p.id === profile?.id && <span className="current-profile">当前书房 <Check size={16} aria-hidden="true" /></span>}</Button>)}</div>
       <Button className="all-profiles" onClick={() => { setSwitchOpen(false); onNavigate('/profiles') }}>所有书房</Button>
       <Button className="all-profiles" onClick={() => { setSwitchOpen(false); if (profile) onNavigate(`/p/${profile.id}/backup`) }}>数据与备份</Button><div className="sheet-theme"><label htmlFor="mobile-theme">外观</label><select id="mobile-theme" className="native-select" value={theme} onChange={e => onTheme(e.target.value as Theme)}>{(Object.keys(themeNames) as Theme[]).map(value => <option key={value} value={value}>{themeNames[value]}</option>)}</select></div>

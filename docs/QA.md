@@ -561,3 +561,19 @@ PWA视觉另用QA-only transform提供假的waiting worker，真实PwaProvider�
 本轮QA设施首轮有.ts别名解析、字段名 / DOM选择器和keep-alive范围假设错误，均只修正ignored测试脚本后重验，没有为通过测试修改业务代码。压力 / 对照截图与JSON结果在ignored qa/theme-stage4，真实运行组件使用合成记录 / 原创封面或本地JPEG，不是用户正式书架或设计模拟图。Windows WebKit绘制与Chromium差异、iPhone键盘 / 安全区 / 返回手势 / 模糊性能、系统文字 / VoiceOver、正式主屏幕安装 / 更新均未验收；manifest暖纸静态启动色与夜航运行时深棕theme-color色差仅提出建议，没有修改。
 
 常规流程可进入受控最终人工验收，但不能给出无条件正式发布结论；先决定已知问题的处理 / 接受范围，再完成真机清单。阶段4未提交、未推送 / 部署，测试服务和浏览器关闭，停止等待用户验收。
+
+## 阶段 4 文档提交与阶段 4.5 问题收敛（2026-10-10，修复未提交）
+
+阶段4五份规范 / 报告核对后，明确路径暂存并提交 cbec3bba32e2e4f71537ac06f9c70dd5dfaaa243，说明 docs: record dual-theme regression results；只有原件目录留为未跟踪，未纳入截图，无push / 部署。前文“阶段4未提交”是历史 checkpoint。
+
+4.5只改 Header、BooksWorkspace、styles.css：实际提交的path变化关闭档案Sheet，导航关闭聚焦当前main并preventScroll，正常关闭返回可见档案按钮；拒绝草稿导航时保持原路径和Sheet。原生历史自动恢复曾在无Sheet / 旧Header对照中与views.scroll竞争，前进后再次返回可丢scroll；沿用现有记忆滚动，对每个提交历史条目设manual，退出Workspace恢复原设置，没有重构hash监听。书名54px改3em（正常仍54px），紧凑三列日期空间不足可换行；封面、网格、字号、主题配色和材质不变。具体分析见[THEME-FIXES-45](THEME-FIXES-45.md)。
+
+104/104现有测试、TypeScript / build、既有verify-reading-ui通过；新增scripts/verify-navigation-layout.mjs及只读隔离fixture，需指定本机既有Playwright模块，不下载浏览器。Chromium与WebKit各8个四尺寸双主题场景检查正常计算尺寸和PNG基线、Back / Forward / ESC / 关闭 / 主区焦点、档案切换、草稿拒绝导航、实际离开滚动及签名复用。手机三列 / 两列均检查正常像素及200%日期行不越列；tablet / PC书名框容两行，无横向溢出，封面尺寸 / 列数不变。暖纸原冻结CSS计算样式对照通过；授权改变white-space / overflow-wrap，不能写成每个CSS属性文本相同。
+
+另复验四尺寸主题持久化、系统模式与主题存储错误回退、900px主题切换、查询 / 筛选 / 排序 / 密度 / 草稿 / blob、keep-alive / 封面缓存，通过；常规模态框503失败 / CAS冲突 / 本地编辑删除撤销和官方SDK会话 / 冷重开 / 档案隔离、隔离导出恢复通过。生产副本真实SW更新waiting / 取消保留输入 / 明确确认单次刷新、夜航保留通过；17静态缓存，1注册，没有API / 原图缓存。源manifest / PWA / SW机制均不变。
+
+存储问题按授权只调查：当前生产bundle主题键读取失败可安全启动；SDK debug键单独读取抛错或全局读取抛错且写入可用仍白屏。只拒绝localStorage getter可打开登录；会话键异常显示连接失败而非空root，但SDK还有未处理拒绝日志。上游与本地locks顶层读取是根因，不是主题逻辑；没有安全且已审查的最小项目内补丁，本轮不升级SDK、不改认证 / 全局存储 / 权限，保留条件性P1。普通本机环境无此故障，实际iPhone / PWA风险未证实也未排除。
+
+所有外部请求和正式写入为0，真实云端RLS / 会话续期未复验。QA测试期间修正截图时悬停动画帧，以及把“菜单打开时原有聚焦滚动”误当导航重置的测试假设；没有为通过测试改变正常菜单聚焦、动画或业务数据。提交前复验出现108px与107.999939px的矩形浮点舍入差异，书名双行高度比较采用0.01px公差，正常字号像素与越列检查不放宽。新增设施扫描曾误触发border工具类，改为读取各边属性的测试代码后消除，不扩大CSS排除。最终产物仍只有4条预期夜航模糊声明，无工具类新增污染。证据与真实组件隔离截图在ignored qa/theme-stage45；StyleKit七份原件、认证 / 数据 / 封面 / 备份 / PWA源文件保持。
+
+可进入受控iPhone候选验收，手势 / 系统文字 / 键盘 / 安全区 / 主屏幕启动与更新 / 模糊性能仍待本人确认；条件性P1需后续决定修复或接受边界，不能给无条件发布结论。4.5修复及新增记录未提交，不推送 / 部署，完成后关闭测试服务并等待验收。

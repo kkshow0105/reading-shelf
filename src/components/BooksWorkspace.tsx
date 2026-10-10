@@ -59,6 +59,7 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
   const dirty = useRef<{ key: string; value: DraftEnvelope } | null>(null)
   const current = useRef({ path, route }); current.current = { path, route }
   const viewsRef = useRef(views); viewsRef.current = views
+  const previousScrollRestoration = useRef(window.history.scrollRestoration)
   const [pending, setPending] = useState<{ path?: string; logout?: boolean } | null>(null)
   const [busy, setBusy] = useState(false), [logoutBusy, setLogoutBusy] = useState(false)
   const mutation = useRef(new MutationGate()), live = useRef(true)
@@ -99,9 +100,12 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
       if (dirty.current || mutation.current.busy || drafts.hasUser(userId)) { event.preventDefault(); event.returnValue = '' }
     }
     window.addEventListener('hashchange', changed); window.addEventListener('beforeunload', unloading)
-    return () => { live.current = false; window.removeEventListener('hashchange', changed); window.removeEventListener('beforeunload', unloading) }
+    return () => { live.current = false; window.history.scrollRestoration = previousScrollRestoration.current; window.removeEventListener('hashchange', changed); window.removeEventListener('beforeunload', unloading) }
   }, [])
   useLayoutEffect(() => {
+    // Apply to each committed history entry: the workspace already restores
+    // shelf scroll, before native restoration can overwrite the saved position.
+    window.history.scrollRestoration = 'manual'
     if (active) saveActiveProfile(active.id)
     window.scrollTo({ top: route.page === 'shelf' ? viewsRef.current[route.profileId].scroll : 0, behavior: 'instant' })
     document.getElementById('main-content')?.focus({ preventScroll: true })
@@ -130,7 +134,7 @@ export function BooksWorkspace({ userId, household, theme, onTheme, logout, draf
     else if (target?.path) navigate(target.path)
   }
   return <CoverDisplayContext.Provider value={coverCache}><>
-    <Header profiles={profiles} profile={active} shelf={route.page === 'shelf'} query={active ? views[active.id].query : ''} onQuery={query => { if (active) setViews(previous => ({ ...previous, [active.id]: { ...previous[active.id], query } })) }} theme={theme} onTheme={onTheme} onNavigate={navigate} onLogout={() => void exit()} logoutBusy={logoutBusy} />
+    <Header profiles={profiles} profile={active} shelf={route.page === 'shelf'} query={active ? views[active.id].query : ''} onQuery={query => { if (active) setViews(previous => ({ ...previous, [active.id]: { ...previous[active.id], query } })) }} theme={theme} onTheme={onTheme} onNavigate={navigate} onLogout={() => void exit()} logoutBusy={logoutBusy} navigationPath={path} />
     {route.page === 'profiles' ? <ProfilesPage profiles={profiles} onNavigate={navigate} /> : <ProfileBooks key={`${household.id}:${route.profileId}`} userId={userId} householdId={household.id} profile={active!} route={route} view={views[route.profileId]} density={density} onDensity={setDensity} onView={changes => setViews(previous => ({ ...previous, [route.profileId]: { ...previous[route.profileId], ...changes } }))} onNavigate={navigate} drafts={drafts} onDraft={value => { dirty.current = value }} mutate={mutate} busy={busy} onFailure={failure} notify={value => { if (live.current) setToast(value) }} />}
     <Dialog open={pending !== null} onOpenChange={open => { if (!open) setPending(null) }}><DialogContent onOpenAutoFocus={event => { event.preventDefault(); continueRef.current?.focus() }}><DialogTitle className="overlay-title">这几行，还没有保存。</DialogTitle><DialogDescription className="overlay-description">{pending?.logout ? '本次会话还有未保存草稿。继续编辑，或放弃这些草稿后退出；已经保存的书籍不会删除。' : '可以保留本次会话草稿再离开，也可以继续写。草稿没有保存到数据库，刷新后会丢失。'}</DialogDescription><div className="draft-dialog-actions"><Button ref={continueRef} variant="outline" onClick={() => setPending(null)}>继续编辑</Button><Button onClick={() => void leave(false)}>{pending?.logout ? '放弃草稿并退出' : '放弃草稿'}</Button>{!pending?.logout && <Button variant="primary" onClick={() => void leave(true)}>保留草稿并离开</Button>}</div></DialogContent></Dialog>
     {toast && <div className="toast" role="status" onMouseEnter={() => setToastPaused(true)} onMouseLeave={() => setToastPaused(false)} onFocusCapture={() => setToastPaused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setToastPaused(false) }}><span>{toast.message}</span>{toast.action && <Button disabled={undoBusy || busy} onClick={async () => {

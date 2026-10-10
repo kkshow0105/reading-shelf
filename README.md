@@ -14,6 +14,8 @@
 
 双主题阶段 0＋1、阶段 2、3A 和 3B 已验收并提交：外观入口为“暖纸书房 / 夜航玻璃”，首次默认暖纸，不跟随系统；选择仅保存在本机 localStorage，首屏提前恢复。夜航普通弹窗、Sheet、Toast及其他提示浮层使用受控玻璃，长表单 / 输入使用不透明深色表面，大图预览排除玻璃。暖纸视觉冻结，业务组件和交互保持。主题机制和 PWA 配置保持原样，manifest 启动颜色仍为暖纸，夜航浏览器 theme-color 仍沿用阶段 1 的 #211F1B，不能保证系统栏 / 启动画面匹配新底色。阶段 4 的隔离回归、已知问题和 iPhone 人工清单见[双主题发布预检](docs/THEME-REGRESSION-4.md)；尚未发布，不代表真机已验收。
 
+阶段 4.5 的 Sheet 返回 / 焦点及文字放大修复、剩余存储风险见[发布前问题收敛](docs/THEME-FIXES-45.md)。针对性浏览器脚本为 scripts/verify-navigation-layout.mjs，需通过 --playwright 指定已有模块路径，可选 --engine webkit；不自动下载浏览器。截图仅放 ignored qa/theme-stage45，不进入 Git。
+
 5B：生产build生成manifest/SW，dev不注册SW。更新由用户点击确认后切换，静态shell预缓存不包含Supabase或封面/备份数据，断网不保证数据功能。当前图标为用户定稿V2“奶油白 + 蓝色层叠书页”，普通版同母版导出、maskable单独安全区适配；B2保留历史资产。2026-10-08用户确认iPhone重新添加主屏幕后图标清晰、无白边/二次圆角/异常裁切，PWA及现有功能正常，见[图标记录](docs/ICON-ASSETS.md)。
 
 5A：“切换阅读档案”菜单 / 手机 Sheet → 数据与备份。完整 ZIP 包括全部家庭原图与软删除历史；JSON 不含原图，CSV 只作表格。恢复只支持另一个空书房，当前正式书房不可恢复。使用 fflate 0.8.3（MIT，按需加载），没有 IndexedDB / 自动备份。格式、100 MiB边界、技术时间策略、同会话重试限制和灾难恢复流程见 [5A](docs/SUPABASE-5A.md)。
